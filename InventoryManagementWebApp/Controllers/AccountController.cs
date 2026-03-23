@@ -8,9 +8,6 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-
-
-
 public class AccountController : Controller
 {
     private readonly IConfiguration _config;
