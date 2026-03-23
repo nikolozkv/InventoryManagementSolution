@@ -1,0 +1,202 @@
+﻿@model InventoryManagementWebApp.Models.UserModel
+
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<style>
+    .edit-user-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .edit-user-title {
+        color: #2c3e50;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        font-weight: 700;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+        text-align: center;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #34495e;
+    }
+
+    .form-control {
+        margin-bottom: 15px;
+    }
+
+    .form-check-label {
+        font-weight: 600;
+        color: #34495e;
+    }
+
+    .btn-primary {
+        background-color: #3498db;
+        border-color: #3498db;
+    }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+
+    .btn-secondary {
+        background-color: #95a5a6;
+        border-color: #95a5a6;
+    }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+            border-color: #7f8c8d;
+        }
+
+    .btn-warning {
+        background-color: #f39c12;
+        border-color: #f39c12;
+    }
+
+        .btn-warning:hover {
+            background-color: #e67e22;
+            border-color: #e67e22;
+        }
+
+    .btn-danger {
+        background-color: #e74c3c;
+        border-color: #e74c3c;
+    }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+            border-color: #c0392b;
+        }
+
+    .password-section {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #dee2e6;
+    }
+</style>
+
+<div class="edit-user-container">
+    <h1 class="edit-user-title">Edit User: @Model.Username</h1>
+
+    <form asp-action="EditUser" method="post">
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <input type="hidden" asp-for="UserId" /> @* Keep the ID for updating *@
+
+        <div class="mb-3">
+            <label asp-for="Username" class="form-label">Username</label>
+            <input asp-for="Username" class="form-control" placeholder="Enter username" />
+            <span asp-validation-for="Username" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label">Email</label>
+            <input asp-for="Email" class="form-control" type="email" placeholder="Enter email" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="FirstName" class="form-label">First Name</label>
+            <input asp-for="FirstName" class="form-control" placeholder="Enter first name" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="LastName" class="form-label">Last Name</label>
+            <input asp-for="LastName" class="form-control" placeholder="Enter last name" />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-4 p-3 border rounded bg-light text-start">
+            <label class="form-label fw-bold mb-3 d-block text-center" style="font-size: 1.1em; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Product Access</label>
+            <div class="row">
+                <div class="col-6">
+                    <div class="form-check mb-2">
+                        <input asp-for="CanAccessWine" class="form-check-input" />
+                        <label asp-for="CanAccessWine" class="form-check-label">Wine (ღვინო)</label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="CanAccessSparkling" class="form-check-input" />
+                        <label asp-for="CanAccessSparkling" class="form-check-label">Sparkling (ცქრიალა)</label>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-check mb-2">
+                        <input asp-for="CanAccessSpirit" class="form-check-input" />
+                        <label asp-for="CanAccessSpirit" class="form-check-label">Spirit (სპირტი)</label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="CanAccessWineBased" class="form-check-input" />
+                        <label asp-for="CanAccessWineBased" class="form-check-label">Wine-Based (ღვინისეული)</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (User.Identity?.Name == Model.Username)
+        {
+            <div class="alert alert-info py-2 mb-3 text-center">
+                <strong><i class="bi bi-info-circle"></i> შენიშვნა:</strong> თქვენ არ შეგიძლიათ შეცვალოთ საკუთარი Admin ან Active სტატუსი.
+            </div>
+            
+            @* ეს ფარული ველები (Hidden) მაინც გვჭირდება, რომ ფორმის გაგზავნისას მოდელი არ დაიკარგოს *@
+            <input type="hidden" asp-for="IsActive" />
+            <input type="hidden" asp-for="IsAdmin" />
+        }
+        else
+        {
+            <div class="mb-3 form-check">
+                <input class="form-check-input" asp-for="IsActive" />
+                <label class="form-check-label" asp-for="IsActive">Active</label>
+            </div>
+            <div class="mb-3 form-check">
+                <input class="form-check-input" asp-for="IsAdmin" />
+                <label class="form-check-label" asp-for="IsAdmin">Admin</label>
+            </div>
+        }
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a asp-action="Users" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+
+    <div class="password-section">
+        <h4 class="mb-3">Password Management</h4>
+        <a asp-action="ChangePassword" asp-route-id="@Model.UserId" class="btn btn-warning">
+            <i class="btn btn-warning"></i>Change Password
+        </a>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmDelete() {
+        Swal.fire({
+        title: 'Are you sure you want to delete this account?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e74c3c',
+        cancelButtonColor: '#95a5a6',
+        confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+        if (result.isConfirmed) {
+        const form = document.querySelector('form[action^="/Admin/DeleteUser"]');
+        if (form) {
+        form.submit();
+        } else {
+        console.error('Delete form not found in the DOM.');
+        }
+        }
+        });
+        }
+    </script>
+}

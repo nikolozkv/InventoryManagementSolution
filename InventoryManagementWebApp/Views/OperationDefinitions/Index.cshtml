@@ -1,0 +1,187 @@
+﻿@model IEnumerable<InventoryManagementWebApp.Models.OperationDefinition>
+
+@{
+    ViewData["Title"] = "🔧 ოპერაციების განსაზღვრა";
+}
+
+<div class="main-container">
+    <h1 class="main-title">@ViewData["Title"]</h1>
+
+    <!-- Search Form and Buttons -->
+    <form method="get" action="@Url.Action("Index", "OperationDefinitions")" class="search-form-container">
+        <input type="text" name="search"
+               placeholder="ძებნა (სახელი, ოპერაციის ტიპი...)"
+               class="form-control"
+               value="@ViewContext.HttpContext.Request.Query["search"]" />
+        <button type="submit" class="btn btn-primary">🔍 ძებნა</button>
+        <a href="@Url.Action("Index", "OperationDefinitions")" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
+        <a asp-action="Create" class="btn btn-success">➕ ახალი ოპერაციის დამატება</a>
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#infoModal">ℹ️ Info</button>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">🔙 უკან</a>
+        
+    </form>
+
+    <!-- Scrollable Table -->
+    <div class="table-responsive" style="max-height: 580px; overflow-y: auto;">
+        <table class="table table-striped">
+            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                <tr>
+                    <th>ID</th>
+                    <th>სახელი</th>
+                    <th style="text-align: center;">არითმეტიკა</th>
+                    <th style="text-align: center;">ოპერაციის ტიპი</th>
+                    <th style="text-align: center;">საპირისპირო სახელი</th>
+                    <th style="text-align: center;">შევსება</th>
+                    <th style="text-align: center;">აქტიურობა</th>
+                    <th class="text-center">ქმედება</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var opDef in Model)
+                    {
+                        <tr>
+                            <td>@opDef.OperationDefID</td>
+                            <td>@opDef.Name</td>
+                            <td style="text-align: center;">@opDef.Math</td>
+                            <td style="text-align: center;">@opDef.OperType</td>
+                            <td style="text-align: center;">@opDef.NameOpposite</td>
+                            <td style="text-align: center;">
+                                @if (opDef.PreserveBarrelState)
+                                {
+                                    <span class="badge bg-success">ავტო</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">ხელით</span>
+                                }
+                            </td>
+                            <td style="text-align: center;">
+                                @if (opDef.IsActive)
+                                {
+                                    <span class="badge bg-success">აქტიური</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">არააქტიური</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@opDef.OperationDefID" class="btn btn-outline-primary btn-sm" title="რედაქტირება">✏️</a>
+                                }
+                                @if (opDef.IsActive)
+                                {
+                                    <form asp-action="Deactivate" asp-route-id="@opDef.OperationDefID" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="დაარქივება">❌</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="Activate" asp-route-id="@opDef.OperationDefID" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-success btn-sm" title="გააქტიურება">♻️</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <p class="mb-0">
+                                <i class="bi bi-info-circle me-2"></i> მონაცემები ვერ მოიძებნა.
+                                @if (!string.IsNullOrEmpty(ViewContext.HttpContext.Request.Query["search"]))
+                                {
+                                    <span>სცადეთ ძებნის გასუფთავება.</span>
+                                }
+                                else
+                                {
+                                    <span>ჯერ არცერთი ოპერაციის განსაზღვრა არ არის დამატებული.</span>
+                                }
+                            </p>
+                            @if (!string.IsNullOrEmpty(ViewContext.HttpContext.Request.Query["search"]))
+                            {
+                                <a href="@Url.Action("Index", "OperationDefinitions")" class="btn btn-link mt-2">ძებნის გასუფთავება</a>
+                            }
+                            <a asp-action="Create" class="btn btn-link mt-2">➕ ახალი ოპერაციის დამატება</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Info Modal -->
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true" data-bs-backdrop="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="z-index: 1055;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="infoModalLabel">ℹ️ ველების განმარტება</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card card-body bg-light-subtle shadow-sm p-4">
+                        <table class="table table-borderless table-sm">
+                            <thead class="border-bottom">
+                                <tr>
+                                    <th class="py-2">ველის სახელი</th>
+                                    <th class="py-2">მნიშვნელობა / აღწერა</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="align-middle py-3"><strong>არითმეტიკა</strong></td>
+                                    <td class="py-3">
+                                        არითმეტიკული მიმართულება: <br />
+                                        <code class="text-primary">(+)</code> - მოცულობის დამატება<br />
+                                        <code class="text-danger">(-)</code> - მოცულობის მოკლება
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle py-3"><strong>ოპერაციის ტიპი</strong></td>
+                                    <td class="py-3">
+                                        ოპერაციის ტიპი:
+                                        <ul class="list-unstyled mb-0 ms-3">
+                                            <li><code>1</code> - ერთ კასრზე მოქმედება (შიდა ოპერაცია)</li>
+                                            <li><code>2</code> - შიდა მარაგების გადაადგილება</li>
+                                            <li><code>3</code> - სხვა კომპანიის მარაგებიდან გადმოტანა</li>
+                                            <li><code>4</code> - შიდა ჩამოხარისხებაა</li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle py-3"><strong>საპირისპირო სახელი</strong></td>
+                                    <td class="py-3">
+                                        საპირწონე ოპერაციის დასახელება. <br />
+                                        აუცილებელია, როცა ოპერაციის ტიპი > 1.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle py-3"><strong>შევსება</strong></td>
+                                    <td class="py-3">
+                                        თუ მონიშნულია (ავტო), მაშინ (+) ოპერაცია გადმოიტანს სასმელის პროცენტებს და მოსავლის წელს.<br />
+                                        თუ მონიშნულია (ხელით), მაშინ (+) ოპერაციისას ხელით უნდა შეიყვანოთ სასმელის პროცენტები და მოსავლის წელი.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle py-3"><strong>აქტიურობა</strong></td>
+                                    <td class="py-3">
+                                        აქტიური ოპერაციები ჩანან ჩამოსაშლელ სიებში.<br />
+                                        არააქტიური ოპერაციები რჩება ისტორიაში, მაგრამ ჩამოსაშლელ სიებში არ ჩანს.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">დახურვა</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,131 @@
+﻿@model IEnumerable<InventoryManagementWebApp.Models.Company>
+@{
+    ViewData["Title"] = "🏭 კომპანიები";
+}
+
+<div class="main-container">
+    <h1 class="main-title">@ViewData["Title"]</h1>
+
+    <!-- ძებნის ფორმა და ღილაკები -->
+    <form method="get" action="@Url.Action("Index", "Companies")" class="search-form-container">
+        <input type="text" name="search" placeholder="ძიება (სახელი, ლოტი, ID კოდი, კონტაქტი, მისამართი)" class="form-control" value="@ViewContext.HttpContext.Request.Query["search"]" />
+        <button type="submit" class="btn btn-primary">🔍 ძებნა</button>
+        <a href="@Url.Action("Index", "Companies")" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
+        <a asp-action="CompanyAdd" class="btn btn-success">➕ ახალი კომპანიის დამატება</a>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">🔙 უკან</a>
+    </form>
+
+    <!-- Scrollable ცხრილი -->
+    <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+        <table class="table table-striped">
+            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                <tr>
+                    <th>სახელი</th>
+                    <th>სამ/ფორმა</th>
+                    <th>ლოტი</th>
+                    <th>ს/კ</th>
+                    <th>კონტაქტი</th>
+                    <th>მისამართი</th>
+                    <th>სტატუსი</th>
+                    <th class="text-center">ქმედება</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var company in Model)
+                    {
+                        <tr>
+                            <td>@company.Name</td>
+                            <td>@company.CompanyType?.Name</td>
+                            <td>@company.CompanyLot</td>
+                            <td>@company.IdentifierCode</td>
+                            <td style="font-size:12px;">@company.ContactInfo</td>
+                            <td style="max-width: 250px; font-size:12px;">@company.Address</td>
+                            <td>
+                                @if (company.IsActive.HasValue && company.IsActive.Value)
+                                {
+                                    <span class="badge bg-success">აქტიური</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">არქივირებული</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a asp-action="Details" asp-route-id="@company.CompanyID" class="btn btn-outline-info btn-sm" title="დეტალები">ℹ️</a>
+                                @* These action buttons remain commented as per your original code's intent *@
+                                <a asp-action="CompanyEdit" asp-route-id="@company.CompanyID" class="btn btn-outline-primary btn-sm" title="რედაქტირება">✏️</a>
+                                @if (company.IsActive.HasValue && company.IsActive.Value)
+                                {
+                                    <a asp-action="CompanyArchive" asp-route-id="@company.CompanyID" class="btn btn-outline-danger btn-sm" title="არქივირება">❌</a>
+                                }
+                                else
+                                {
+                                    <a asp-action="CompanyReactivate" asp-route-id="@company.CompanyID" class="btn btn-outline-success btn-sm" title="რეაქტივაცია">♻️</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <p class="mb-0">
+                                <i class="bi bi-info-circle me-2"></i> მონაცემები ვერ მოიძებნა. @* Assuming Bootstrap Icons are available *@
+                                @if (!string.IsNullOrEmpty(ViewContext.HttpContext.Request.Query["search"]))
+                                {
+                                    <span>სცადეთ ძებნის გასუფთავება.</span>
+                                }
+                                else
+                                {
+                                    <span>ჯერ არცერთი კომპანია არ არის დამატებული.</span>
+                                }
+                            </p>
+                            @if (!string.IsNullOrEmpty(ViewContext.HttpContext.Request.Query["search"]))
+                            {
+                                <a href="@Url.Action("Index", "Companies")" class="btn btn-link mt-2">ძებნის გასუფთავება</a>
+                            }
+                            <a asp-action="CompanyAdd" class="btn btn-link mt-2">➕ ახალი კომპანიის დამატება</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+@section Scripts {
+    @* SweetAlert ბიბლიოთეკა *@
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // ✅ Html.Raw() ასწორებს სიმბოლოების პრობლემას (Encoding)
+            var successMessage = '@Html.Raw(TempData["SuccessMessage"])';
+            var errorMessage = '@Html.Raw(TempData["ErrorMessage"])';
+
+            // ❌ თუ შეცდომაა
+            if (errorMessage) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'შეცდომა',
+                    text: errorMessage,
+                    confirmButtonText: 'დახურვა',
+                    confirmButtonColor: '#d33'
+                });
+            }
+
+            // ✅ თუ წარმატებაა (ტაიმერის გარეშე, ღილაკით)
+            if (successMessage) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'წარმატება',
+                    text: successMessage,
+                    confirmButtonText: 'კარგი',     // ღილაკის ტექსტი
+                    confirmButtonColor: '#198754'   // მწვანე ფერი (Bootstrap success)
+                });
+            }
+        });
+    </script>
+}

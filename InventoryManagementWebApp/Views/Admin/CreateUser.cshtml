@@ -1,0 +1,163 @@
+@model InventoryManagementWebApp.Models.CreateUserViewModel
+@{
+    ViewData["Title"] = "Create User";
+}
+
+<style>
+    body {
+        padding-top: 0 !important;
+    }
+
+    .form-container {
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .form-title {
+        color: #2c3e50;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        font-weight: 700;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #34495e;
+    }
+
+    .text-danger {
+        color: #e74c3c !important;
+    }
+
+    .btn-primary {
+        background-color: #3498db;
+        border-color: #3498db;
+        text-align: center;
+        width: 150px;
+        margin: 0 auto;
+        display: block;
+    }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+
+    .form-check-inline {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+    }
+</style>
+
+<div class="form-container">
+    <h1 class="form-title">Create User</h1>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <form asp-action="CreateUser" method="post" class="needs-validation" novalidate>
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="mb-3 text-start">
+            <label asp-for="Username" class="form-label">Username</label>
+            <input asp-for="Username" class="form-control" aria-describedby="usernameHelp" required />
+            <span asp-validation-for="Username" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3 text-start">
+            <label asp-for="Email" class="form-label">Email</label>
+            <input asp-for="Email" class="form-control" aria-describedby="emailHelp" required />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3 text-start">
+            <label asp-for="FirstName" class="form-label">First Name</label>
+            <input asp-for="FirstName" class="form-control" aria-describedby="firstNameHelp" required />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3 text-start">
+            <label asp-for="LastName" class="form-label">Last Name</label>
+            <input asp-for="LastName" class="form-control" aria-describedby="lastNameHelp" required />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3 text-start">
+            <label asp-for="Password" class="form-label">Password</label>
+            <input asp-for="Password" class="form-control" type="password" autocomplete="new-password" required />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3 text-start">
+            <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+            <input asp-for="ConfirmPassword" class="form-control" type="password" autocomplete="new-password" required />
+            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+        </div>
+
+        <div class="mb-4 p-3 border rounded bg-light text-start">
+            <label class="form-label fw-bold mb-3 d-block text-center" style="font-size: 1.1em; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Product Access</label>
+            <div class="row">
+                <div class="col-6">
+                    <div class="form-check mb-2">
+                        <input asp-for="CanAccessWine" class="form-check-input" />
+                        <label asp-for="CanAccessWine" class="form-check-label">Wine (ღვინო)</label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="CanAccessSparkling" class="form-check-input" />
+                        <label asp-for="CanAccessSparkling" class="form-check-label">Sparkling (ცქრიალა)</label>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-check mb-2">
+                        <input asp-for="CanAccessSpirit" class="form-check-input" />
+                        <label asp-for="CanAccessSpirit" class="form-check-label">Spirit (სპირტი)</label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="CanAccessWineBased" class="form-check-input" />
+                        <label asp-for="CanAccessWineBased" class="form-check-label">Wine-Based</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-check-inline mb-3">
+            <input asp-for="IsActive" class="form-check-input form-switch" type="checkbox" />
+            <label asp-for="IsActive" class="form-check-label">Is Active</label>
+        </div>
+
+        <div class="form-check-inline mb-4">
+            <input asp-for="IsAdmin" class="form-check-input form-switch" type="checkbox" />
+            <label asp-for="IsAdmin" class="form-check-label">Is Admin</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create User</button>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

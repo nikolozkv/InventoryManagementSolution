@@ -1,0 +1,83 @@
+﻿@model InventoryManagementWebApp.Models.Company
+
+@{
+    ViewData["Title"] = "კომპანიის დეტალები";
+}
+
+<div class="container py-2">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9 col-sm-12">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-info text-white p-3 rounded-top-3 d-flex align-items-center justify-content-center">
+                    <h2 class="card-title mb-0 fs-3">
+                        <span class="fw-bold">ℹ️ კომპანიის დეტალები</span>
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <div class="row g-3">
+                        <dl class="row mb-0 align-items-center">
+                            
+                            <dt class="col-sm-4 text-muted small text-uppercase mb-2">
+                                <i class="bi bi-building me-1"></i> სახელი
+                            </dt>
+                            <dd class="col-sm-8 mb-3 fw-bold fs-5 border-bottom pb-2">@Model.Name</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase mb-2">
+                                <i class="bi bi-briefcase me-1"></i> სამართლებრივი ფორმა
+                            </dt>
+                            <dd class="col-sm-8 mb-3 border-bottom pb-2">@(Model.CompanyType?.Name ?? "არ არის მითითებული")</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase mb-2">
+                                <i class="bi bi-hash me-1"></i> ლოტი
+                            </dt>
+                            <dd class="col-sm-8 mb-3 border-bottom pb-2">@Model.CompanyLot</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase mb-2">
+                                <i class="bi bi-credit-card me-1"></i> საიდენტიფიკაციო კოდი
+                            </dt>
+                            <dd class="col-sm-8 mb-3 border-bottom pb-2">@Model.IdentifierCode</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase mb-2">
+                                <i class="bi bi-telephone me-1"></i> კონტაქტი
+                            </dt>
+                            <dd class="col-sm-8 mb-3 border-bottom pb-2">@(Model.ContactInfo ?? "არ არის მითითებული")</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase mb-2">
+                                <i class="bi bi-geo-alt me-1"></i> მისამართი
+                            </dt>
+                            <dd class="col-sm-8 mb-3 border-bottom pb-2">@(Model.Address ?? "არ არის მითითებული")</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase mb-2">
+                                <i class="bi bi-activity me-1"></i> სტატუსი
+                            </dt>
+                            <dd class="col-sm-8 mb-2">
+                                @if (Model.IsActive.HasValue && Model.IsActive.Value)
+                                {
+                                    <span class="badge bg-success px-3 py-2 rounded-pill">აქტიური</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger px-3 py-2 rounded-pill">არქივირებული</span>
+                                }
+                            </dd>
+
+                        </dl>
+                    </div>
+
+                    <div class="col-12 text-center pt-4 mt-3 border-top">
+                        <div class="d-flex justify-content-center flex-wrap gap-3">
+                            <a asp-action="CompanyEdit" asp-route-id="@Model.CompanyID" class="btn btn-primary btn-lg px-4">
+                                <i class="bi bi-pencil-square me-2"></i> რედაქტირება
+                            </a>
+                            <a asp-action="Index" class="btn btn-secondary btn-lg px-4">
+                                <i class="bi bi-arrow-left-circle-fill me-2"></i> უკან დაბრუნება
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

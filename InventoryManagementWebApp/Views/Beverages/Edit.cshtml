@@ -1,0 +1,213 @@
+﻿@model InventoryManagementWebApp.Models.BeverageCreateViewModel
+
+@{
+    ViewData["Title"] = "✏️ სასმელის რედაქტირება";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9 col-sm-12">
+        
+            @* --- გაფრთხილებების ბლოკი --- *@
+            @if (Model.UsageState == 1)
+            {
+                <div class="alert alert-warning shadow-sm border-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>ყურადღება:</strong> ეს სასმელი გამოყენებულია აქტიურ კასრებში. მახასიათებლების შეცვლა აისახება ბაზაში, თუმცა <strong>სასმელის ტიპის</strong> შეცვლა დაბლოკილია.
+                </div>
+            }
+            else if (Model.UsageState == 2)
+            {
+                <div class="alert alert-danger shadow-sm border-danger">
+                    <i class="bi bi-shield-lock-fill me-2"></i>
+                    <strong>დაბლოკილია:</strong> სასმელზე ფიქსირდება ისტორიული ოპერაციები. მახასიათებლების შეცვლა დაუშვებელია (შეგიძლიათ შეცვალოთ მხოლოდ სახელი).
+                </div>
+            }
+
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-info text-white p-3 rounded-top-3 d-flex align-items-center justify-content-center">
+                    <h2 class="card-title mb-0 fs-3">
+                        <i class="bi bi-pencil-square me-2 fs-4"></i>
+                        <span class="fw-bold">@ViewData["Title"]</span>
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="BeverageID" />
+                        <input type="hidden" asp-for="UsageState" />
+
+                        @* თუ Disable გვიწევს, Hidden-ში ვინახავთ ძველ მნიშვნელობებს, რომ POST-ზე არ დაიკარგოს *@
+                        @if (Model.UsageState >= 1)
+                        {
+                            <input type="hidden" asp-for="ProductTypeID" />
+                        }
+                        @if (Model.UsageState == 2)
+                        {
+                            <input type="hidden" asp-for="CategoryID" />
+                            <input type="hidden" asp-for="SubCategoryID" />
+                            <input type="hidden" asp-for="ColorID" />
+                            <input type="hidden" asp-for="SweetnessID" />
+                        }
+
+                        <div class="row g-3">
+                            <div class="col-12 mb-3">
+                                <label asp-for="Name" class="form-label fw-semibold">
+                                    <i class="bi bi-tag-fill me-1"></i> სახელი:
+                                </label>
+                                <input asp-for="Name" class="form-control" placeholder="მაგ: წითელი ღვინო" />
+                                <span asp-validation-for="Name" class="text-danger small mt-1"></span>
+                            </div>
+
+                            <div class="col-md-6 col-sm-12 mb-3">
+                                <label asp-for="ProductTypeID" class="form-label fw-semibold">
+                                    <i class="bi bi-bookmark-fill me-1"></i> სასმელის ტიპი:
+                                </label>
+                                @* HTML-ის დონეზეც ვბლოკავთ *@
+                                <select asp-for="ProductTypeID" class="form-select" id="ProductTypeSelect" disabled="@(Model.UsageState >= 1 ? "disabled" : null)">
+                                    <option value="">-- აირჩიე ტიპი --</option>
+                                    @foreach (var pt in ViewBag.ProductTypes)
+                                    {
+                                        <option value="@pt.ProductTypeID" data-bit="@pt.BitValue">@pt.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="ProductTypeID" class="text-danger small mt-1"></span>
+                            </div>
+
+                            <div class="col-md-6 col-sm-12 mb-3">
+                                <label asp-for="CategoryID" class="form-label fw-semibold">
+                                    <i class="bi bi-collection-fill me-1"></i> კატეგორია:
+                                </label>
+                                <select asp-for="CategoryID" class="form-select" id="CategorySelect" disabled="@(Model.UsageState == 2 ? "disabled" : null)">
+                                    <option value="">-- აირჩიე კატეგორია --</option>
+                                    @foreach (var cat in ViewBag.Categories)
+                                    {
+                                        <option value="@cat.CategoryID" data-mask="@cat.TypeCodeMask">@cat.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="CategoryID" class="text-danger small mt-1"></span>
+                            </div>
+
+                            <div class="col-md-6 col-sm-12 mb-3">
+                                <label asp-for="SubCategoryID" class="form-label fw-semibold">
+                                    <i class="bi bi-box-seam-fill me-1"></i> ქვეკატეგორია:
+                                </label>
+                                <select asp-for="SubCategoryID" class="form-select" id="SubCategorySelect" disabled="@(Model.UsageState == 2 ? "disabled" : null)">
+                                    <option value="">-- აირჩიე ქვეკატეგორია --</option>
+                                    @foreach (var sub in ViewBag.SubCategories)
+                                    {
+                                        <option value="@sub.SubCategoryID" data-mask="@sub.TypeCodeMask">@sub.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="SubCategoryID" class="text-danger small mt-1"></span>
+                            </div>
+
+                            <div class="col-md-6 col-sm-12 mb-3">
+                                <label asp-for="ColorID" class="form-label fw-semibold">
+                                    <i class="bi bi-palette-fill me-1"></i> ფერი:
+                                </label>
+                                <select asp-for="ColorID" class="form-select" id="ColorSelect" disabled="@(Model.UsageState == 2 ? "disabled" : null)">
+                                    <option value="">-- აირჩიე ფერი --</option>
+                                    @foreach (var c in ViewBag.Colors)
+                                    {
+                                        <option value="@c.ColorID" data-mask="@c.TypeCodeMask">@c.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="ColorID" class="text-danger small mt-1"></span>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label asp-for="SweetnessID" class="form-label fw-semibold">
+                                    <i class="bi bi-droplet-half me-1"></i> შაქრიანობა:
+                                </label>
+                                <select asp-for="SweetnessID" class="form-select" id="SweetnessSelect" disabled="@(Model.UsageState == 2 ? "disabled" : null)">
+                                    <option value="">-- აირჩიე შაქრიანობა --</option>
+                                    @foreach (var sw in ViewBag.SweetnessLevels)
+                                    {
+                                        <option value="@sw.SweetnessID" data-mask="@sw.TypeCodeMask">@sw.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="SweetnessID" class="text-danger small mt-1"></span>
+                            </div>
+
+                            <div class="col-12 text-center pt-3 border-top mt-4">
+                                <div class="d-flex justify-content-center flex-wrap gap-3">
+                                    <button type="submit" class="btn btn-success btn-lg px-4" title="შენახვა">
+                                        <i class="bi bi-save-fill me-2"></i> 💾 შენახვა
+                                    </button>
+                                    <a asp-action="Index" class="btn btn-secondary btn-lg px-4" title="დაბრუნება">
+                                        <i class="bi bi-arrow-left-circle-fill me-2"></i> 🔙 დაბრუნება
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const typeSelect = document.getElementById("ProductTypeSelect");
+            const dependentSelects = [
+                document.getElementById("CategorySelect"),
+                document.getElementById("SubCategorySelect"),
+                document.getElementById("ColorSelect"),
+                document.getElementById("SweetnessSelect")
+            ];
+            
+            // სერვერიდან მოსული სტატუსი გადავცეთ JS-ს
+            const usageState = @Model.UsageState;
+
+            function applyFilter(resetValues = false) {
+                const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+                const bit = parseInt(selectedOption.getAttribute("data-bit")) || 0;
+
+                dependentSelects.forEach(select => {
+                    if (!select) return;
+
+                    if (bit === 0) {
+                        select.disabled = true;
+                        if(resetValues && usageState !== 2) select.value = "";
+                        return;
+                    }
+
+                    // ველებს ვააქტიურებთ მხოლოდ მაშინ, თუ ისტორიით არ არის დაბლოკილი
+                    if (usageState !== 2) {
+                        select.disabled = false;
+                    }
+
+                    Array.from(select.options).forEach(option => {
+                        if (option.value === "") return;
+                        const mask = parseInt(option.getAttribute("data-mask")) || 0;
+
+                        if ((mask & bit) > 0) {
+                            option.hidden = false;
+                            if (usageState !== 2) option.disabled = false;
+                        } else {
+                            option.hidden = true;
+                            if (usageState !== 2) option.disabled = true;
+                        }
+                    });
+                    
+                    if (resetValues && usageState !== 2) {
+                        select.value = "";
+                    }
+                });
+            }
+
+            typeSelect.addEventListener("change", function() {
+                applyFilter(true);
+            });
+
+            if(typeSelect.value !== "") {
+                applyFilter(false);
+            }
+        });
+    </script>
+}

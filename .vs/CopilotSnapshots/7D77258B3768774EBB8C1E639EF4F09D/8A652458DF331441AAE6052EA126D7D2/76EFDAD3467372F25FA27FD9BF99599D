@@ -1,0 +1,242 @@
+﻿@model InventoryManagementWebApp.Models.CompanyBarrelDetailsViewModel
+
+@{
+    ViewData["Title"] = "📦 არქივი";
+}
+
+@{
+    var numberFormatInfo = new System.Globalization.NumberFormatInfo
+    {
+        NumberGroupSeparator = " ",
+        NumberDecimalSeparator = "."
+    };
+}
+
+<div class="main-container">
+    <div class="summary-card">
+        <h1 class="main-title">@ViewData["Title"] - @Model.CompanyType @Model.CompanyName</h1>
+        <span class="summary-value">( ლოტი: @Model.CompanyLot</span>
+        <span class="summary-value">ID კოდი: @Model.IdentifierCode )</span>
+    </div>
+
+    <form method="get" action="@Url.Action("Archive", "CompanyBarrelDetails", new { companyId = Model.CompanyID })"
+          class="search-form-container d-flex align-items-center flex-wrap gap-2 mb-3">
+
+        <input type="hidden" name="companyId" value="@Model.CompanyID" />
+
+        <input type="text" name="search1"
+               placeholder="ძიება სასმელის სახელით..."
+               class="form-control"
+               style="max-width: 250px;"
+               value="@Context.Request.Query["search1"]" />
+
+        <input type="text" name="search2"
+               placeholder="ძიება კატეგორიით..."
+               class="form-control"
+               style="max-width: 250px;"
+               value="@Context.Request.Query["search2"]" />
+
+        <button type="submit" class="btn btn-primary">🔍 ძებნა</button>
+
+        <a href="@Url.Action("Archive", "CompanyBarrelDetails", new { companyId = Model.CompanyID })" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
+
+        <div class="vr mx-2"></div>
+
+        <a asp-action="Index" asp-route-companyId="@Model.CompanyID" class="btn btn-secondary ms-auto">
+            <i class="bi bi-arrow-left-circle-fill me-2"></i> 🔙 უკან
+        </a>
+
+    </form>
+
+    <div class="summary-card">
+        <div class="summary-item">
+            <span class="summary-value"><i class="bi bi-box-seam summary-icon"></i>სულ: @Model.Barrels.Count</span>
+        </div>
+
+        @* არქივირებული კასრები *@
+        <div class="summary-item">
+            <span class="summary-value text-muted" title="არქივში არსებული კასრები">
+                <i class="bi bi-archive summary-icon text-secondary"></i>არქივში: @Model.Barrels.Count(b => !b.IsActive)
+            </span>
+        </div>
+
+
+        <div class="summary-item">
+            <span class="summary-value"><i class="bi bi-droplet-half summary-icon"></i>მოცულობა: @Model.Barrels.Sum(b => b.CurrentVolume).ToString("N2", numberFormatInfo) ლ</span>
+        </div>
+    </div>
+
+
+    <div class="table-responsive" id="barrelTableContainer" style="max-height: 550px; overflow-y: auto;">
+        <table class="table table-striped company-barrel-details-table align-middle">
+            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                <tr>
+                    <th style="width: 5%;">ID</th>
+                    <th style="width: 15%;">სასმელის სახელი</th>
+                    <th style="width: 8%;">ტიპი</th>
+                    <th style="width: 8%;">კატეგორია</th>
+                    <th style="width: 8%;">ფერი</th>
+                    <th style="width: 8%;">შაქრიანობა</th>
+                    <th style="width: 10%;">ნაშთი</th>
+                    <th style="width: 6%;">წელი</th>
+                    <th style="width: 8%;">სტატუსი</th>
+                    <th style="width: 10%; text-align: center;">ქმედება</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Barrels.Count > 0)
+                {
+                    @foreach (var barrel in Model.Barrels)
+                    {
+                        <tr class="@(barrel.IsActive ? "" : "table-secondary text-muted")">
+                            <td>@barrel.BarrelID</td>
+                            <td>@barrel.BeverageName</td>
+                            <td>@barrel.ProductType</td>
+                            <td>@barrel.Category</td>
+                            <td>@barrel.Color</td>
+                            <td>@barrel.Sweetness</td>
+                            <td>@barrel.CurrentVolume.ToString("N2", numberFormatInfo)</td>
+                            <td>@(barrel.Year == 0 ? "-" : barrel.Year.ToString())</td>
+
+                            <td>
+                                @if (barrel.IsActive)
+                                {
+                                    <span class="badge bg-success">აქტიური</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">პასიური</span>
+                                }
+                            </td>
+
+                            <td class="text-center">
+                                @if (barrel.IsActive)
+                                {
+                                    <form asp-action="Deactivate" asp-route-id="@barrel.BarrelID" method="post" style="display:inline;">
+                                        @* ✅ ვინახავთ ფილტრის პარამეტრებს *@
+                                        <input type="hidden" name="search1" value="@ViewData["CurrentSearch1"]" />
+                                        <input type="hidden" name="search2" value="@ViewData["CurrentSearch2"]" />
+
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="დაარქივება">
+                                            ❌
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="Activate" asp-route-id="@barrel.BarrelID" method="post" style="display:inline;">
+                                        @* ✅ ვინახავთ ფილტრის პარამეტრებს *@
+                                        <input type="hidden" name="search1" value="@ViewData["CurrentSearch1"]" />
+                                        <input type="hidden" name="search2" value="@ViewData["CurrentSearch2"]" />
+
+                                        <button type="submit" class="btn btn-outline-success btn-sm" title="აღდგენა">
+                                            ♻️
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="10" class="text-center py-4 text-muted">
+                            <i class="bi bi-search me-2"></i>მონაცემები ვერ მოიძებნა
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    @* ✅ ეს სკრიპტი აუცილებელია, რომ მესიჯები აქ გამოჩნდეს და შემდეგ გვერდზე არ გადაყვეს *@
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var successMessage = '@Html.Raw(TempData["SuccessMessage"])';
+            var errorMessage = '@Html.Raw(TempData["ErrorMessage"])';
+
+            if (errorMessage) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'შეცდომა',
+                    text: errorMessage,
+                    confirmButtonText: 'დახურვა',
+                    confirmButtonColor: '#d33'
+                });
+            }
+
+            if (successMessage) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'წარმატება',
+                    text: successMessage,
+                    confirmButtonText: 'კარგი',
+                    confirmButtonColor: '#198754'
+                });
+            }
+            // --- სქროლის პოზიციის დამახსოვრება ---
+            var container = document.getElementById("barrelTableContainer");
+
+            // 1. ვამოწმებთ, ხომ არ გვაქვს შენახული სქროლის პოზიცია და ვაბრუნებთ იქ
+            var savedScroll = sessionStorage.getItem("archiveScrollPosition");
+            if (savedScroll) {
+                container.scrollTop = savedScroll;
+                // ვშლით მეხსიერებიდან, რომ სხვა დროს გვერდზე შემოსვლისას ტყუილად არ ჩამოსქროლოს
+                sessionStorage.removeItem("archiveScrollPosition");
+            }
+
+            // 2. ღილაკზე დაჭერისას ვინახავთ მიმდინარე პოზიციას
+            var actionForms = document.querySelectorAll("form[action*='Activate'], form[action*='Deactivate']");
+            actionForms.forEach(function(form) {
+                form.addEventListener("submit", function() {
+                    sessionStorage.setItem("archiveScrollPosition", container.scrollTop);
+                });
+            });
+        });
+    </script>
+}
+
+<style>
+    .summary-card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 10px 30px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border-left: 5px solid #ffc107;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 50px;
+        align-items: center;
+    }
+
+    .summary-item {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .summary-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #212529;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .summary-icon {
+        color: #ffc107;
+        margin-right: 8px;
+        font-size: 1.1rem;
+    }
+
+    .search-form-container {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+</style>

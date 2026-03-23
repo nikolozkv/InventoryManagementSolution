@@ -1,0 +1,416 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using InventoryManagementWebApp.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
+
+namespace InventoryManagementWebApp.Controllers
+{
+    [Authorize]
+    public class CompanyBarrelDetailsController : Controller
+    {
+        private readonly InventoryContext _context;
+
+        // 1=ღვინო, 2=ცქრიალა, 8=ღვინისეული. ჯამში 11.
+        private readonly int _mask = 11;
+
+        public CompanyBarrelDetailsController(InventoryContext context)
+        {
+            _context = context;
+        }
+
+        // ==========================================
+        // INDEX
+        // ==========================================
+        public async Task<IActionResult> Index(int companyId, string? search1, string? search2)
+        {
+            var company = await _context.Companies
+                .Include(c => c.CompanyType)
+                .FirstOrDefaultAsync(c => c.CompanyID == companyId);
+
+            if (company == null) return NotFound("კომპანია ვერ მოიძებნა!");
+
+            var pId = new SqlParameter("@CompanyID", companyId);
+            var pMask = new SqlParameter("@ProductTypeMask", _mask);
+            var p1 = new SqlParameter("@Search1", search1 ?? (object)DBNull.Value);
+            var p2 = new SqlParameter("@Search2", search2 ?? (object)DBNull.Value);
+
+            var barrels = await _context.BarrelViewModels
+                .FromSqlRaw("EXEC [dbo].[GetCompanyBarrelsDetailed] @CompanyID=@CompanyID, @ProductTypeMask=@ProductTypeMask, @Search1=@Search1, @Search2=@Search2",
+                             pId, pMask, p1, p2)
+                .ToListAsync();
+
+            var viewModel = new CompanyBarrelDetailsViewModel
+            {
+                CompanyID = company.CompanyID,
+                CompanyName = company.Name,
+                CompanyLot = company.CompanyLot,
+                IdentifierCode = company.IdentifierCode,
+                CompanyType = company.CompanyType?.Name ?? "N/A",
+                Barrels = barrels
+            };
+
+            ViewBag.Search1 = search1;
+            ViewBag.Search2 = search2;
+            return View(viewModel);
+        }
+
+        // ==========================================
+        // CREATE
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> Create(int companyId)
+        {
+            var company = await _context.Companies.FindAsync(companyId);
+            if (company == null) return NotFound("კომპანია ვერ მოიძებნა!");
+
+            await PopulateDropDowns();
+
+            var newBarrel = new Barrel
+            {
+                CompanyID = companyId,
+                Year = DateTime.Now.Month < 11 ? DateTime.Now.Year - 1 : DateTime.Now.Year
+            };
+            return View(newBarrel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Barrel barrel)
+        {
+            if (barrel.Year == null) barrel.Year = 0;
+
+            // დუბლიკატის შემოწმება (იგივე ლოგიკა რაც გქონდათ)
+            var existingBarrelInfo = await _context.Barrels
+                .AsNoTracking()
+                .Where(b => b.CompanyID == barrel.CompanyID &&
+                            b.BeverageID == barrel.BeverageID &&
+                            b.Year == barrel.Year)
+                .Select(b => new { b.BarrelID, b.IsActive })
+                .FirstOrDefaultAsync();
+
+            if (existingBarrelInfo != null)
+            {
+                if (existingBarrelInfo.IsActive)
+                    ViewBag.ErrorMessage = "ასეთი პარამეტრების მქონე კასრი უკვე არსებობს და აქტიურია!";
+                else
+                {
+                    ViewBag.ErrorMessage = "ნაპოვნია იდენტური კასრი არქივში (პასიური).";
+                    ViewBag.PassiveBarrelID = existingBarrelInfo.BarrelID;
+                }
+                await PopulateDropDowns();
+                return View(barrel);
+            }
+
+            try
+            {
+                // ვიძახებთ SQL პროცედურას EF Add-ის ნაცვლად!
+                var pCompanyId = new SqlParameter("@CompanyID", barrel.CompanyID);
+                var pBeverageId = new SqlParameter("@BeverageID", barrel.BeverageID);
+                var pYear = new SqlParameter("@Year", barrel.Year);
+                var pCreatedBy = new SqlParameter("@CreatedByUserID", 1); // დროებით 1, თუ User ID სისტემა გაქვთ, ჩაანაცვლეთ
+                var pNewId = new SqlParameter("@NewBarrelID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+
+                await _context.Database.ExecuteSqlRawAsync(
+                    "EXEC [dbo].[BarrelCreate] @CompanyID, @BeverageID, @Year, @CreatedByUserID, @NewBarrelID OUTPUT",
+                    pCompanyId, pBeverageId, pYear, pCreatedBy, pNewId);
+
+                TempData["SuccessMessage"] = "კასრი წარმატებით დაემატა.";
+                return RedirectToAction("Index", new { companyId = barrel.CompanyID });
+            }
+            catch (SqlException ex)
+            {
+                if (ex.Number == 2601 || ex.Number == 2627)
+                    TempData["ErrorMessage"] = "სისტემამ აღკვეთა დუბლიკატის შექმნა (Race Condition).";
+                else
+                    TempData["ErrorMessage"] = "შეცდომა ბაზაში ჩაწერისას: " + ex.Message;
+
+                await PopulateDropDowns();
+                return RedirectToAction(nameof(Index), new { companyId = barrel.CompanyID });
+            }
+        }
+
+        // ==========================================
+        // EDIT
+        // ==========================================
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+            var barrel = await _context.Barrels
+                .Include(b => b.Beverage).ThenInclude(x => x.ProductType)
+                .Include(b => b.Beverage.Category)
+                .Include(b => b.Beverage.Color)
+                .Include(b => b.Beverage.Sweetness)
+                .FirstOrDefaultAsync(m => m.BarrelID == id);
+
+            if (barrel == null) return NotFound();
+
+            await PopulateDropDowns();
+            return View(barrel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Barrel barrel)
+        {
+            if (id != barrel.BarrelID) return NotFound();
+            if (barrel.Year == null) barrel.Year = 0;
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // 1. ვიძახებთ პროცედურას სასმელის შესაცვლელად (ის თავისით შეამოწმებს IsDeletable-ს)
+                    var pBarrelId = new SqlParameter("@BarrelID", barrel.BarrelID);
+                    var pNewBevId = new SqlParameter("@NewBeverageID", barrel.BeverageID);
+                    var pUpdatedBy = new SqlParameter("@UpdatedByUserID", 1);
+                    var pMessage = new SqlParameter("@Message", SqlDbType.NVarChar, 200) { Direction = ParameterDirection.Output };
+
+                    await _context.Database.ExecuteSqlRawAsync(
+                        "EXEC [dbo].[BarrelBeverageEdit] @BarrelID, @NewBeverageID, @UpdatedByUserID, @Message OUTPUT",
+                        pBarrelId, pNewBevId, pUpdatedBy, pMessage);
+
+                    // 2. რადგან შენი პროცედურა Year-ს არ ანახლებს, ვაკეთებთ დამატებით განახლებას წლისთვის
+                    await _context.Database.ExecuteSqlRawAsync(
+                        "UPDATE Barrels SET Year = {0} WHERE BarrelID = {1}", barrel.Year, barrel.BarrelID);
+
+                    TempData["SuccessMessage"] = (string)pMessage.Value;
+                    return RedirectToAction(nameof(Index), new { companyId = barrel.CompanyID });
+                }
+                catch (SqlException ex)
+                {
+                    // ვიჭერთ ჩვენს THROW 50008-ს პროცედურიდან
+                    if (ex.Number == 50008)
+                    {
+                        ViewBag.ErrorMessage = ex.Message;
+                    }
+                    else if (ex.Number == 2601 || ex.Number == 2627)
+                    {
+                        ViewBag.ErrorMessage = "მონაცემების დამთხვევა: დუბლიკატი კასრის შექმნა დაუშვებელია.";
+                    }
+                    else
+                    {
+                        ViewBag.ErrorMessage = "შეცდომა განახლებისას: " + ex.Message;
+                    }
+                }
+            }
+
+            await PopulateDropDowns();
+            return View(barrel);
+        }
+
+        // ==========================================
+        // HELPERS (აქ დაემატა ფილტრი!)
+        // ==========================================
+        private async Task PopulateDropDowns()
+        {
+            // აქ ვფილტრავთ, რომ მოდალში მხოლოდ ამ მოდულისთვის ნებადართული (ღვინო) სასმელები გამოჩნდეს
+            ViewBag.Beverages = await _context.Beverages
+                .Include(b => b.ProductType)
+                .Include(b => b.Category)
+                .Include(b => b.Color)
+                .Include(b => b.Sweetness)
+                .Where(b => b.IsActive && (b.ProductType.BitValue & _mask) > 0) // <--- დაემატა ნიღაბი!
+                .ToListAsync();
+
+            ViewBag.VintageYears = Enumerable.Range(DateTime.Now.Year - 20, 15)
+                .Reverse()
+                .Select(y => new SelectListItem { Value = y.ToString(), Text = y.ToString() })
+                .Append(new SelectListItem { Value = "0", Text = "წელის გარეშე" })
+                .ToList();
+        }
+
+        // ==========================================
+        // STATUS (Archive / Reactivate)
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> Status(int id)
+        {
+            var barrel = await _context.Barrels
+            .Include(b => b.Beverage)
+            .FirstOrDefaultAsync(b => b.BarrelID == id);
+            if (barrel == null) return NotFound();
+            return View(barrel);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeStatus(int id, bool newStatus)
+        {
+            var barrel = await _context.Barrels.FindAsync(id);
+            if (barrel == null) return NotFound();
+            // თუ ვააქტიურებთ (პასიურიდან აქტიურში), უნდა დავრწმუნდეთ, რომ დუბლიკატი არ იქმნება აქტიურებში
+            if (newStatus == true)
+            {
+                bool activeDuplicateExists = await _context.Barrels.AnyAsync(b =>
+                b.CompanyID == barrel.CompanyID &&
+                b.BeverageID == barrel.BeverageID &&
+                b.Year == barrel.Year &&
+                b.IsActive == true &&
+                b.BarrelID != barrel.BarrelID);
+                if (activeDuplicateExists)
+                {
+                    TempData["ErrorMessage"] = "ვერ ხერხდება გააქტიურება: მსგავსი აქტიური კასრი უკვე არსებობს!";
+                    return RedirectToAction("Status", new { id = id });
+                }
+            }
+            barrel.IsActive = newStatus;
+            _context.Update(barrel);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = newStatus ? "კასრი წარმატებით აღდგა!" : "კასრი გადავიდა არქივში.";
+            return RedirectToAction("Index", new { companyId = barrel.CompanyID });
+        }
+        // ==========================================
+        // DELETE
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var barrel = await _context.Barrels
+            .Include(b => b.Beverage)
+            .FirstOrDefaultAsync(b => b.BarrelID == id);
+            if (barrel == null) return NotFound();
+            return View(barrel);
+        }
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var barrel = await _context.Barrels.FindAsync(id);
+            if (barrel == null) return NotFound();
+            int companyId = barrel.CompanyID; // რომ დავბრუნდეთ უკან
+            try
+            {
+                _context.Barrels.Remove(barrel);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "კასრი წარმატებით წაიშალა.";
+            }
+            catch (DbUpdateException ex)
+            {
+                // ვიჭერთ SQL შეცდომას (Trigger error 51000)
+                if (ex.InnerException is SqlException sqlEx && sqlEx.Number == 51000)
+                {
+                    TempData["ErrorMessage"] = sqlEx.Message; // ტრიგერის ტექსტი
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "წაშლა ვერ მოხერხდა: " + ex.Message;
+                }
+                // ვრჩებით წაშლის გვერდზე, რომ მომხმარებელმა ნახოს შეცდომა
+                return RedirectToAction("Delete", new { id = id });
+            }
+            return RedirectToAction("Index", new { companyId = companyId });
+        }
+        // ==========================================
+        // ARCHIVE (მარტივი სია + სტატუსის ცვლილება)
+        // ==========================================
+        // 1. არქივის გვერდი (მხოლოდ სია)
+        public async Task<IActionResult> Archive(int companyId, string? search1, string? search2)
+        {
+            var company = await _context.Companies
+                    .Include(c => c.CompanyType)
+                    .FirstOrDefaultAsync(c => c.CompanyID == companyId);
+
+            if (company == null) return NotFound("კომპანია ვერ მოიძებნა!");
+
+            var query = _context.Barrels
+                .Include(b => b.Beverage).ThenInclude(x => x.ProductType)
+                .Include(b => b.Beverage.Category)
+                .Include(b => b.Beverage.Color)
+                .Include(b => b.Beverage.Sweetness)
+                .Where(b => b.CompanyID == companyId)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search1))
+                query = query.Where(b => b.Beverage.Name.Contains(search1));
+
+            if (!string.IsNullOrEmpty(search2))
+                query = query.Where(b => b.Beverage.Category.Name.Contains(search2));
+
+            // ჯერ ვაწყობთ სტატუსით (false ანუ პასიური იქნება თავში), 
+            // შემდეგ კი ID-ის კლებადობით (ყველაზე ახლები თავში)
+            var barrels = await query
+                .OrderBy(b => b.IsActive)
+                .ThenByDescending(b => b.BarrelID)
+                .ToListAsync();
+
+            var viewModel = new CompanyBarrelDetailsViewModel
+            {
+                CompanyID = company.CompanyID,
+                CompanyName = company.Name,
+                CompanyType = company.CompanyType?.Name ?? "N/A",
+                CompanyLot = company.CompanyLot ?? "",
+                IdentifierCode = company.IdentifierCode ?? "",
+                TotalStock = barrels.Where(b => b.IsActive).Sum(b => b.CurrentVolume),
+                Barrels = barrels.Select(b => new BarrelViewModel
+                {
+                    BarrelID = b.BarrelID,
+                    BeverageName = b.Beverage?.Name ?? "უცნობი",
+                    ProductType = b.Beverage?.ProductType?.Name ?? "",
+                    Category = b.Beverage?.Category?.Name ?? "",
+                    Color = b.Beverage?.Color?.Name ?? "",
+                    Sweetness = b.Beverage?.Sweetness?.Name ?? "",
+                    CurrentVolume = b.CurrentVolume,
+                    Year = b.Year,
+                    IsActive = b.IsActive
+                }).ToList()
+            };
+
+            ViewData["CurrentSearch1"] = search1;
+            ViewData["CurrentSearch2"] = search2;
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Activate(int id, string? search1, string? search2)
+        {
+            var barrel = await _context.Barrels.FindAsync(id);
+            if (barrel == null) return NotFound();
+
+            bool duplicate = await _context.Barrels.AnyAsync(b =>
+               b.CompanyID == barrel.CompanyID &&
+               b.BeverageID == barrel.BeverageID &&
+               b.Year == barrel.Year &&
+               b.IsActive == true &&
+               b.BarrelID != barrel.BarrelID);
+
+            if (duplicate)
+            {
+                TempData["ErrorMessage"] = "ვერ ხერხდება გააქტიურება: მსგავსი აქტიური კასრი უკვე არსებობს!";
+            }
+            else
+            {
+                barrel.IsActive = true;
+                _context.Update(barrel);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Archive), new { companyId = barrel.CompanyID, search1, search2 });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Deactivate(int id, string? search1, string? search2)
+        {
+            var barrel = await _context.Barrels.FindAsync(id);
+            if (barrel == null) return NotFound();
+
+            barrel.IsActive = false;
+            _context.Update(barrel);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Archive), new { companyId = barrel.CompanyID, search1, search2 });
+        }
+        private bool BarrelExists(int id)
+        {
+            return _context.Barrels.Any(e => e.BarrelID == id);
+        }
+    }
+}

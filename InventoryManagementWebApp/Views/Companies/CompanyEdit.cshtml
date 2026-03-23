@@ -1,0 +1,116 @@
+﻿@model InventoryManagementWebApp.Models.Company
+@{
+    ViewData["Title"] = "✏️ კომპანიის რედაქტირება";
+}
+
+<div class="container py-2">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9 col-sm-12">
+            <div class="card shadow-lg border-0 rounded-3">
+                @* Header - იგივე სტილი, მაგრამ რედაქტირების სათაურით *@
+                <div class="card-header bg-primary text-white p-3 rounded-top-3 d-flex align-items-center justify-content-center">
+                    <h2 class="card-title mb-0 fs-3">
+                        <span class="fw-bold">✏️ კომპანიის რედაქტირება</span>
+                    </h2>
+                </div>
+
+                <div class="card-body p-4">
+                    <form asp-action="CompanyEdit" method="post">
+                        @* რედაქტირებისთვის აუცილებელია ID-ის შენახვა *@
+                        <input type="hidden" asp-for="CompanyID" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4" role="alert"></div>
+
+                        <div class="row g-3">
+                            @* 1. სახელი *@
+                            <div class="col-12 mb-3">
+                                <label asp-for="Name" class="form-label fw-semibold">
+                                    <i class="bi bi-building-fill me-1"></i> კომპანიის სახელი <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Name" class="form-control" placeholder="კომპანიის სრული დასახელება" maxlength="255" aria-describedby="nameHelp" />
+                                <div id="nameHelp" class="form-text text-muted">კომპანიის სრული ოფიციალური დასახელება.</div>
+                                <span asp-validation-for="Name" class="text-danger fs-6 mt-1 d-block"></span>
+                            </div>
+
+                            @* 2. სამუშაო ფორმა *@
+                            <div class="col-md-6 col-sm-12 mb-3">
+                                <label asp-for="CompanyTypeID" class="form-label fw-semibold">
+                                    <i class="bi bi-briefcase-fill me-1"></i> სამუშაო ფორმა <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="CompanyTypeID" class="form-select" asp-items="ViewBag.CompanyTypeID">
+                                    <option value="">-- აირჩიეთ სამუშაო ფორმა --</option>
+                                </select>
+                                <span asp-validation-for="CompanyTypeID" class="text-danger fs-6 mt-1 d-block"></span>
+                            </div>
+
+                            @* 3. საიდენტიფიკაციო კოდი *@
+                            <div class="col-md-6 col-sm-12 mb-3">
+                                <label asp-for="IdentifierCode" class="form-label fw-semibold">
+                                    <i class="bi bi-credit-card-fill me-1"></i> საიდენტიფიკაციო კოდი <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="IdentifierCode" class="form-control" placeholder="საიდენტიფიკაციო კოდი" maxlength="15" />
+                                <span asp-validation-for="IdentifierCode" class="text-danger fs-6 mt-1 d-block"></span>
+                            </div>
+
+                            @* 4. ლოტის კოდი *@
+                            <div class="col-md-6 col-sm-12 mb-3">
+                                <label asp-for="CompanyLot" class="form-label fw-semibold">
+                                    <i class="bi bi-hash me-1"></i> ლოტის კოდი <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="CompanyLot" class="form-control" placeholder="ლოტის კოდი" maxlength="4" />
+                                <span asp-validation-for="CompanyLot" class="text-danger fs-6 mt-1 d-block"></span>
+                            </div>
+
+                            @* 5. დაწყების თარიღი *@
+                            <div class="col-md-6 col-sm-12 mb-3">
+                                <label asp-for="StartDate" class="form-label fw-semibold">
+                                    <i class="bi bi-calendar-fill me-1"></i> დაწყების თარიღი (არჩევითი)
+                                </label>
+                                <input asp-for="StartDate" class="form-control" type="date" aria-describedby="dateHelp" />
+                                <div id="dateHelp" class="form-text text-muted">თუ არ აირჩევთ, გამოიყენება დღევანდელი თარიღი.</div>
+                                <span asp-validation-for="StartDate" class="text-danger fs-6 mt-1 d-block"></span>
+                            </div>
+
+                            @* 6. კონტაქტი *@
+                            <div class="col-12 mb-3">
+                                <label asp-for="ContactInfo" class="form-label fw-semibold">
+                                    <i class="bi bi-telephone-fill me-1"></i> კონტაქტი (არჩევითი)
+                                </label>
+                                <input asp-for="ContactInfo" class="form-control" placeholder="ტელეფონი, ელ. ფოსტა" maxlength="255" />
+                                <span asp-validation-for="ContactInfo" class="text-danger fs-6 mt-1 d-block"></span>
+                            </div>
+
+                            @* 7. მისამართი *@
+                            <div class="col-12 mb-4">
+                                <label asp-for="Address" class="form-label fw-semibold">
+                                    <i class="bi bi-geo-alt-fill me-1"></i> მისამართი (არჩევითი)
+                                </label>
+                                <input asp-for="Address" class="form-control" placeholder="ფიზიკური მისამართი" maxlength="255" />
+                                <span asp-validation-for="Address" class="text-danger fs-6 mt-1 d-block"></span>
+                            </div>
+
+                            @* ღილაკები *@
+                            <div class="col-12 text-center pt-3 border-top">
+                                <div class="d-flex justify-content-center flex-wrap gap-3">
+                                    @* ღილაკი შევცვალე "btn-primary"-ით რომ განსხვავდებოდეს Add-ისგან, მაგრამ სტილი იგივეა *@
+                                    <button type="submit" class="btn btn-primary btn-lg me-3 px-4">
+                                        <i class="bi bi-check-circle-fill me-2"></i> შენახვა
+                                    </button>
+                                    <a asp-action="Index" class="btn btn-secondary btn-lg px-4">
+                                        <i class="bi bi-arrow-left-circle-fill me-2"></i> გაუქმება
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

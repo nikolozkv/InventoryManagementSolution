@@ -1,0 +1,93 @@
+﻿@model InventoryManagementWebApp.Models.Beverage
+
+@{
+    ViewData["Title"] = "სასმელის რეაქტივაცია"; // Removed emoji from title for consistency, will use in H2
+}
+
+<div class="container py-5">
+    @* Increased vertical padding for more breathing room *@
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-sm-12">
+            @* Adjusted column width for better readability of details *@
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-success text-white p-3 rounded-top-3 d-flex align-items-center justify-content-center">
+                    @* Changed header color to success for reactivation context *@
+                    <h2 class="card-title mb-0 fs-3">
+                        <i class="bi bi-arrow-clockwise me-2 fs-4"></i> @* Used a relevant refresh/reactivate icon *@
+                        <span class="fw-bold">♻️ სასმელის რეაქტივაცია</span> @* Clearer, more precise title *@
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <p class="lead text-center mb-4">
+                        @* Styled informational message *@
+                        თქვენ აპირებთ სასმელის შესახებ ინფორმაციის <span class="fw-bold text-success">რეაქტივაციას</span>.
+                        სასმელი კვლავ გამოჩნდება აქტიურ სიაში.
+                        გთხოვთ, გადაამოწმოთ დეტალები:
+                    </p>
+
+                    <dl class="row mb-5 gx-3 gy-2">
+                        @* Added gutter spacing for better alignment, increased bottom margin *@
+                        <dt class="col-sm-4 text-sm-end fw-semibold">
+                            @* Aligned labels to the right on small screens and up, made bold *@
+                            <i class="bi bi-tag-fill me-1"></i> სახელი:
+                        </dt>
+                        <dd class="col-sm-8 text-dark">@Html.DisplayFor(model => model.Name)</dd>
+
+                        <dt class="col-sm-4 text-sm-end fw-semibold">
+                            <i class="bi bi-info-circle-fill me-1"></i> სტატუსი:
+                        </dt>
+                        <dd class="col-sm-8">
+                            @if (Model.IsActive)
+                            {
+                                <span class="badge bg-success fs-6"><i class="bi bi-check-circle-fill me-1"></i> აქტიური</span> @* Larger font size for badge, added icon *@
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary fs-6"><i class="bi bi-archive-fill me-1"></i> არქივირებული</span> @* Larger font size for badge, added icon *@
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4 text-sm-end fw-semibold">
+                            <i class="bi bi-bookmark-fill me-1"></i> პროდუქტის ტიპი:
+                        </dt>
+                        <dd class="col-sm-8">@Html.DisplayFor(model => model.ProductType.Name)</dd>
+
+                        <dt class="col-sm-4 text-sm-end fw-semibold">
+                            <i class="bi bi-collection-fill me-1"></i> კატეგორია:
+                        </dt>
+                        <dd class="col-sm-8">@Html.DisplayFor(model => model.Category.Name)</dd>
+
+                        <dt class="col-sm-4 text-sm-end fw-semibold">
+                            <i class="bi bi-box-seam-fill me-1"></i> ქვეკატეგორია:
+                        </dt>
+                        <dd class="col-sm-8">@Html.DisplayFor(model => model.SubCategory.Name)</dd>
+
+                        <dt class="col-sm-4 text-sm-end fw-semibold">
+                            <i class="bi bi-palette-fill me-1"></i> ფერი:
+                        </dt>
+                        <dd class="col-sm-8">@Html.DisplayFor(model => model.Color.Name)</dd>
+
+                        <dt class="col-sm-4 text-sm-end fw-semibold">
+                            <i class="bi bi-sweet-fill me-1"></i> შაქრიანობა:
+                        </dt>
+                        <dd class="col-sm-8">@Html.DisplayFor(model => model.Sweetness.Name)</dd>
+                    </dl>
+
+                    <form asp-action="Reactivate" method="post">
+                        <input type="hidden" asp-for="BeverageID" />
+                        <div class="text-center pt-3 border-top">
+                            <div class="d-flex justify-content-center flex-wrap gap-3">
+                                <button type="submit" class="btn btn-success btn-lg px-4" title="რეაქტივაცია">
+                                    <i class="bi bi-arrow-clockwise me-2"></i> ♻️ რეაქტივაცია
+                                </button>
+                                <a asp-action="Index" class="btn btn-secondary btn-lg px-4" title="გაუქმება">
+                                    <i class="bi bi-x-circle-fill me-2"></i> 🔙 გაუქმება
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,65 @@
+﻿@model IEnumerable<InventoryManagementWebApp.Models.DocumentType>
+
+@{
+    ViewData["Title"] = "დოკუმენტის ტიპები";
+}
+
+<div class="w-50 mx-auto">
+    <h2>📄 დოკუმენტის ტიპები</h2>
+
+    <div class="d-flex align-items-center mb-2 search-form-container">
+        <a asp-controller="DocumentType" asp-action="Create" class="btn btn-success me-lg-auto">
+            ➕ ახალი დოკუმენტის ტიპის დამატება
+        </a>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+            🔙 უკან
+        </a>
+    </div>
+    <table class="table table-striped">
+        <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+            <tr>
+                <th>ID</th>
+                <th>დოკუმენტის სახელი</th>
+                <th>აქტიურობა</th>
+                <th class="text-center">ქმედება</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var doc in Model)
+            {
+                <tr>
+                    <td>@doc.DocumentTypeID</td>
+                    <td>@doc.DocumentName</td>
+                    <td>
+                        @if (doc.IsActive)
+                        {
+                            <span class="badge bg-success">აქტიური</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">არააქტიური</span>
+                        }
+                    </td>
+                    <td class="text-center">
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@doc.DocumentTypeID" class="btn btn-outline-primary btn-sm" title="რედაქტირება">✏️</a>
+                        }
+                        @if (doc.IsActive)
+                        {
+                            <form asp-action="Deactivate" asp-route-id="@doc.DocumentTypeID" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="დაარქივება">❌</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-action="Activate" asp-route-id="@doc.DocumentTypeID" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-outline-success btn-sm" title="გააქტიურება">♻️</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

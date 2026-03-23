@@ -1,0 +1,74 @@
+﻿@model InventoryManagementWebApp.Models.Barrel
+
+@{
+    ViewData["Title"] = Model.IsActive ? "📦 არქივირება" : "🔄 რეაქტივაცია";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+                </div>
+            }
+
+            <div class="card shadow border-0">
+                <div class="card-header @(Model.IsActive ? "bg-warning" : "bg-success") text-white text-center">
+                    <h3 class="mb-0">
+                        @if (Model.IsActive)
+                        {
+                            <text><i class="bi bi-archive-fill"></i> არქივირება</text>
+                        }
+                        else
+                        {
+
+                            <text><i class="bi bi-arrow-repeat"></i> რეაქტივაცია</text>
+                        }
+                    </h3>
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">დარწმუნებული ხართ, რომ გსურთ სტატუსის შეცვლა?</h5>
+
+                    <ul class="list-group list-group-flush text-start mb-4">
+                        <li class="list-group-item"><strong>სასმელი:</strong> @Model.Beverage?.Name</li>
+                        <li class="list-group-item"><strong>წელი:</strong> @(Model.Year == 0 ? "უწლოვანო" : Model.Year.ToString())</li>
+                        <li class="list-group-item"><strong>ამჟამინდელი სტატუსი:</strong> @(Model.IsActive ? "აქტიური 🟢" : "პასიური 🔴")</li>
+                    </ul>
+
+                    <form asp-action="ChangeStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.BarrelID" />
+                        @* ახალი სტატუსი იქნება საპირისპირო *@
+                        <input type="hidden" name="newStatus" value="@((!Model.IsActive).ToString().ToLower())" />
+
+                        <div class="d-flex justify-content-center gap-3">
+                            <button type="submit" class="btn btn-lg @(Model.IsActive ? "btn-warning" : "btn-success") text-dark fw-bold">
+                                @if (Model.IsActive)
+                                {
+                                    <text>კი, გადავიდეს არქივში</text>
+                                }
+                                else
+                                {
+
+                                    <text>კი, აღდგეს აქტიურებში</text>
+                                }
+                            </button>
+
+                            @if (Model.IsActive)
+                            {
+                                <a asp-action="Edit" asp-route-id="@Model.BarrelID" class="btn btn-secondary btn-lg">გაუქმება</a>
+                            }
+                            else
+                            {
+                                @* თუ პასიურია, უკან დაბრუნება შეიძლება კომპანიის ინდექსზე *@
+                                <a asp-action="Index" asp-route-companyId="@Model.CompanyID" class="btn btn-secondary btn-lg">გაუქმება</a>
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

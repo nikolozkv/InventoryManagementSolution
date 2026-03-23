@@ -1,0 +1,241 @@
+﻿@model InventoryManagementWebApp.Models.Barrel
+
+@{
+    ViewData["Title"] = "✏️ კასრის რედაქტირება";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-sm-12">
+            <div class="card shadow-lg border-0 rounded-3">
+                @* Header - Create-ის მსგავსი, მაგრამ განსხვავებული სათაურით *@
+                <div class="card-header bg-primary text-white p-3 rounded-top-3 d-flex align-items-center justify-content-center">
+                    <h2 class="card-title mb-0 fs-3">
+                        <span class="fw-bold">✏️ კასრის რედაქტირება</span>
+                    </h2>
+                </div>
+
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post">
+                        @* 🛑 უმნიშვნელოვანესი: დამალული ველები, რომ მონაცემები არ დაიკარგოს *@
+                        <input type="hidden" asp-for="BarrelID" />
+                        <input type="hidden" asp-for="CompanyID" />
+                        <input type="hidden" asp-for="CreatedDate" />
+                        <input type="hidden" asp-for="IsActive" />
+                        <input type="hidden" asp-for="CurrentVolume" /> @* აუცილებელია, რომ მარაგი არ განულდეს! *@
+
+                        @* სასმელის ID *@
+                        <input type="hidden" id="SelectedBeverageID" asp-for="BeverageID" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4" role="alert"></div>
+
+                        <div class="row g-3">
+                            @* 1. არჩეული სასმელი (ცხრილი) *@
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-wine me-1"></i> არჩეული სასმელი:
+                                </label>
+                                <div class="card card-body p-0 border-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped mb-0 text-center" id="selectedBeverageTable">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>დასახელება</th>
+                                                    <th>ტიპი</th>
+                                                    <th>კატეგორია</th>
+                                                    <th>ფერი</th>
+                                                    <th>სიტკბო</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @* 🛑 აქ ვტვირთავთ არსებულ მონაცემებს *@
+                                                @if (Model.Beverage != null)
+                                                {
+                                                    <tr>
+                                                        <td>@Model.Beverage.Name</td>
+                                                        @* null-safe შემოწმებები (?.) *@
+                                                        <td>@(Model.Beverage.ProductType?.Name ?? "-")</td>
+                                                        <td>@(Model.Beverage.Category?.Name ?? "-")</td>
+                                                        <td>@(Model.Beverage.Color?.Name ?? "-")</td>
+                                                        <td>@(Model.Beverage.Sweetness?.Name ?? "-")</td>
+                                                    </tr>
+                                                }
+                                                else
+                                                {
+                                                    <tr><td colspan="5" class="text-muted">სასმელი არ არის არჩეული</td></tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    @* ღილაკი სასმელის შესცვლელად *@
+                                    <button type="button" class="btn btn-outline-primary mt-2 w-100" data-bs-toggle="modal" data-bs-target="#beverageSelectionModal">
+                                        <i class="bi bi-pencil-square me-1"></i> სასმელის შეცვლა
+                                    </button>
+                                </div>
+                                <span asp-validation-for="BeverageID" class="text-danger fs-6 mt-1 d-block"></span>
+                            </div>
+
+                            @* 2. წელი (Year) *@
+                            <div class="col-md-6 col-sm-12 mb-3">
+                                <label asp-for="Year" class="form-label fw-semibold">
+                                    <i class="bi bi-calendar-event me-1"></i> მოსავლის წელი <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Year" class="form-control" placeholder="მაგ: 2023" type="number" />
+                                <span asp-validation-for="Year" class="text-danger fs-6 mt-1 d-block"></span>
+                            </div>
+
+                            @* ღილაკები *@
+                            <div class="col-12 text-center pt-3 border-top mt-4">
+                                <div class="d-flex justify-content-center flex-wrap gap-3">
+                                    <button type="submit" class="btn btn-primary btn-lg me-3 px-4">
+                                        <i class="bi bi-check-circle-fill me-2"></i> შენახვა
+                                    </button>
+                                    @* უკან დაბრუნებისას ვატანთ CompanyID-ს *@
+                                    <a asp-action="Index" asp-route-companyId="@Model.CompanyID" class="btn btn-secondary btn-lg px-4">
+                                        <i class="bi bi-arrow-left-circle-fill me-2"></i> გაუქმება
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* 👇 ქვემოთ არის მოდალის და სკრიპტების კოდი. 
+   ეს ზუსტად იგივეა რაც Create.cshtml-ში, 
+   უბრალოდ გადმოაკოპირეთ ან დატოვეთ როგორც არის.
+*@
+
+<div class="modal fade" id="beverageSelectionModal" tabindex="-1" aria-labelledby="beverageSelectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="beverageSelectionModalLabel">
+                    <i class="bi bi-list-check me-2"></i> აირჩიეთ სასმელი
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-4">
+                        <input type="text" id="searchName" class="form-control" placeholder="სახელი...">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" id="searchProperties" class="form-control" placeholder="ტიპი, კატეგორია...">
+                    </div>
+                    <div class="col-md-4">
+                        <select id="searchLogic" class="form-select">
+                            <option value="AND">ყველა პირობა (AND)</option>
+                            <option value="OR">რომელიმე (OR)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle" id="beverageTable">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>დასახელება</th>
+                                <th>ტიპი</th>
+                                <th>კატეგორია</th>
+                                <th>ფერი</th>
+                                <th>სიტკბო</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.Beverages != null)
+                            {
+                                foreach (var beverage in (IEnumerable<InventoryManagementWebApp.Models.Beverage>)ViewBag.Beverages)
+                                {
+                                    <tr class="beverage-row cursor-pointer"
+                                        data-id="@beverage.BeverageID"
+                                        data-name="@beverage.Name"
+                                        data-type="@(beverage.ProductType?.Name ?? "")"
+                                        data-category="@(beverage.Category?.Name ?? "")"
+                                        data-color="@(beverage.Color?.Name ?? "")"
+                                        data-sweetness="@(beverage.Sweetness?.Name ?? "")"
+                                        style="cursor: pointer;">
+                                        <td>@beverage.Name</td>
+                                        <td>@(beverage.ProductType?.Name ?? "")</td>
+                                        <td>@(beverage.Category?.Name ?? "")</td>
+                                        <td>@(beverage.Color?.Name ?? "")</td>
+                                        <td>@(beverage.Sweetness?.Name ?? "")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // Modal initialization
+            var beverageSelectionModal = new bootstrap.Modal(document.getElementById('beverageSelectionModal'));
+
+            // Filter logic
+            function filterBeverages() {
+                var nameVal = $('#searchName').val().toLowerCase();
+                var propsVal = $('#searchProperties').val().toLowerCase();
+                var logic = $('#searchLogic').val();
+
+                $('#beverageTable tbody tr').filter(function () {
+                    var rowText = $(this).text().toLowerCase();
+                    var nameMatch = $(this).find('td:eq(0)').text().toLowerCase().indexOf(nameVal) > -1;
+                    var propsMatch = rowText.indexOf(propsVal) > -1;
+
+                    if (logic === 'AND') {
+                        $(this).toggle(nameMatch && propsMatch);
+                    } else {
+                        $(this).toggle(nameMatch || propsMatch);
+                    }
+                });
+            }
+
+            $('#searchName, #searchProperties, #searchLogic').on('input change', filterBeverages);
+
+            // Selection Logic (განახლებული, რომ დახურვისას ვალიდაციაც გასუფთავდეს)
+            $('#beverageTable').on('click', '.beverage-row', function () {
+                var row = $(this);
+
+                // ვიღებთ მონაცემებს data- ატრიბუტებიდან
+                var beverageID = row.data('id');
+                var beverageName = row.data('name');
+                var type = row.data('type');
+                var category = row.data('category');
+                var color = row.data('color');
+                var sweetness = row.data('sweetness');
+
+                // Hidden Input-ში ვწერთ ID-ს
+                $('#SelectedBeverageID').val(beverageID);
+
+                // მთავარ ცხრილს ვაახლებთ ვიზუალურად
+                var newRowHtml = "<tr>" +
+                    "<td>" + beverageName + "</td>" +
+                    "<td>" + type + "</td>" +
+                    "<td>" + category + "</td>" +
+                    "<td>" + color + "</td>" +
+                    "<td>" + sweetness + "</td>" +
+                    "</tr>";
+                $("#selectedBeverageTable tbody").html(newRowHtml);
+
+                // მოდალს ვხურავთ
+                beverageSelectionModal.hide();
+
+                // ვალიდაციის შეცდომას ვაქრობთ (თუ იყო)
+                $('span[data-valmsg-for="BeverageID"]').text('');
+            });
+        });
+    </script>
+}

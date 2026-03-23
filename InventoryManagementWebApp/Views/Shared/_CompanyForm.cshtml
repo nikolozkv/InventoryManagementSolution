@@ -1,0 +1,46 @@
+﻿@model InventoryManagementWebApp.Models.Company
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="mb-3 half-width">
+    <label asp-for="Name" class="form-label">კომპანიის სახელი <span class="text-danger">*</span></label>
+    <input asp-for="Name" class="form-control" maxlength="255" />
+    <span asp-validation-for="Name" class="text-danger"></span>
+</div>
+
+<div class="mb-3 half-width">
+    <label asp-for="CompanyTypeID" class="form-label">სამუშაო ფორმა <span class="text-danger">*</span></label>
+    <select asp-for="CompanyTypeID" class="form-select" asp-items="ViewBag.CompanyTypeID"></select>
+    <span asp-validation-for="CompanyTypeID" class="text-danger"></span>
+</div>
+
+<div class="mb-3 half-width">
+    <label asp-for="IdentifierCode" class="form-label">საიდენტიფიკაციო კოდი <span class="text-danger">*</span></label>
+    <input asp-for="IdentifierCode" class="form-control" maxlength="15" />
+    <span asp-validation-for="IdentifierCode" class="text-danger"></span>
+</div>
+
+<div class="mb-3 half-width">
+    <label asp-for="CompanyLot" class="form-label">ლოტის კოდი <span class="text-danger">*</span></label>
+    <input asp-for="CompanyLot" class="form-control" maxlength="4" />
+    <span asp-validation-for="CompanyLot" class="text-danger"></span>
+</div>
+
+<div class="mb-3 half-width">
+    <label asp-for="StartDate" class="form-label">დაწყების თარიღი (არჩევითი)</label>
+    <input asp-for="StartDate" class="form-control" type="date" />
+    <span asp-validation-for="StartDate" class="text-danger"></span>
+</div>
+
+<div class="mb-3 half-width">
+    <label asp-for="ContactInfo" class="form-label">კონტაქტი (არჩევითი)</label>
+    <input asp-for="ContactInfo" class="form-control" maxlength="255" />
+    <span asp-validation-for="ContactInfo" class="text-danger"></span>
+</div>
+
+<div class="mb-3 half-width">
+    <label asp-for="Address" class="form-label">მისამართი (არჩევითი)</label>
+    <input asp-for="Address" class="form-control" maxlength="255" />
+    <span asp-validation-for="Address" class="text-danger"></span>
+</div>
+<div class="clearfix"></div>

@@ -1,0 +1,191 @@
+﻿@{
+    ViewData["Title"] = "მთავარი გვერდი";
+    
+    // ვიღებთ კონტროლერიდან გამოგზავნილ რიცხვს
+    int mask = ViewBag.AllowedProductsMask ?? 0;
+    
+    // ვშიფრავთ უფლებებს ბიტური ოპერატორით
+    bool canSeeWine = (mask & 1) != 0;
+    bool canSeeSparkling = (mask & 2) != 0;
+    bool canSeeSpirit = (mask & 4) != 0;
+    bool canSeeWineBased = (mask & 8) != 0;
+    
+    // ღვინის ბლოკი გამოჩნდეს, თუ აქვს წვდომა ღვინოზე, ცქრიალაზე ან ღვინისეულზე
+    bool canSeeWineProduction = canSeeWine || canSeeSparkling || canSeeWineBased;
+}
+
+<style>
+    body {
+        font-family: 'Open Sans', sans-serif;
+        background: #ece9e6; 
+        color: #333;
+        line-height: 1.6;
+        font-size: 14px;
+    }
+
+    @@media (min-width: 768px) {
+        html {
+        font-size: 14px;
+    }
+
+    }
+
+    .main-container {
+        max-width: 1000px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .main-title {
+        color: #2c3e50;
+        font-size: 3.8rem;
+        margin-bottom: 20px;
+        font-weight: 700;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .main-subtitle {
+        font-size: 1.4rem;
+        color: #555;
+        margin-bottom: 40px;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .link-section-title {
+        font-size: 2.2rem;
+        color: #34495e;
+        margin-top: 50px;
+        margin-bottom: 30px;
+        font-weight: 600;
+    }
+
+    .links-flex-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 25px; 
+        margin-top: 30px;
+    }
+
+    .card-link {
+        flex: 1 1 calc(33% - 50px); 
+        min-width: 280px; 
+        background-color: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 30px;
+        text-decoration: none;
+        color: #333;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        text-align: left; 
+        position: relative; 
+        overflow: hidden; 
+    }
+
+        .card-link:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+            background-color: #eaf6ff; 
+        }
+
+        .card-link h3 {
+            color: #2980b9;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .card-link p {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .card-link .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #3498db;
+        }
+
+    @@media (max-width: 992px) {
+        .card-link {
+            flex: 1 1 calc(50% - 25px); 
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .main-title {
+            font-size: 3rem;
+        }
+
+        .main-subtitle {
+            font-size: 1.2rem;
+        }
+
+        .link-section-title {
+            font-size: 1.8rem;
+        }
+
+        .card-link {
+            flex: 1 1 90%; 
+            padding: 25px;
+        }
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+
+<div class="main-container">
+    <h1 class="main-title">კეთილი იყოს თქვენი მობრძანება!</h1>
+
+    <h2 class="link-section-title">მთავარი სექციები</h2>
+
+    <div class="links-flex-container">
+        <a href="/Companies" class="card-link">
+            <span class="icon">&#127981;</span> <h3>კომპანიები</h3>
+            <p>იხილეთ კომპანიების მონაცემები და დეტალები.</p>
+        </a>
+        <a href="/Beverages" class="card-link">
+            <span class="icon">🍷 </span>
+            <h3>სასმელები</h3>
+            <p>მართეთ და დაამატეთ სასმელების კატეგორიები.</p>
+        </a>
+        <a href="/DocumentType" class="card-link">
+            <span class="icon">&#128196;</span>
+            <h3>დოკუმენტები</h3>
+            <p>დოკუმენტების ტიპების მართვა.</p>
+        </a>
+        <a href="/OperationDefinitions" class="card-link">
+            <span class="icon">&#9874;&#65039;</span>
+            <h3>მეთოდები</h3>
+            <p>განსაზღვრეთ სხვადასხვა ოპერაციები და პროცესები.</p>
+        </a>
+
+        @if (canSeeWineProduction)
+        {
+            <a href="/CompanyBarrels/Index?typeMask=11" class="card-link">
+                <span class="icon">&#127815;&#127870;</span>
+                <h3>ღვინის წარმოება</h3>
+                <p>იხილეთ ღვინის/ცქრიალას წარმოების მოცულობები და ბრუნვა.</p>
+            </a>
+        }
+
+        @if (canSeeSpirit)
+        {
+            <a href="/CompanyBarrels/Index?typeMask=4" class="card-link">
+                <span class="icon">🔥⚗️</span>
+                <h3>სპირტის წარმოება</h3>
+                <p>იხილეთ სპირტის მარაგები, დისტილაცია და ბრუნვა.</p>
+            </a>
+        }
+    </div>
+</div>

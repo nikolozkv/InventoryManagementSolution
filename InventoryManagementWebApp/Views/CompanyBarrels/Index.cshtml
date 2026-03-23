@@ -1,0 +1,84 @@
+﻿@model IEnumerable<InventoryManagementWebApp.Models.CompanyBarrelSummary>
+
+@{
+    ViewData["Title"] = "კომპანია / პირი";
+}
+
+
+    <h1 class="main-title">📦 კომპანია/პირი</h1>
+
+<!-- ძებნის ფორმა -->
+    <form method="get"
+          action="@Url.Action("Index", "CompanyBarrels")"
+          class="search-form-container">
+    <input type="text" name="search1" placeholder="ძიება 1..." value="@Context.Request.Query["search1"]" class="form-control w-auto" />
+    <input type="text" name="search2" placeholder="ძიება 2..." value="@Context.Request.Query["search2"]" class="form-control w-auto" />
+    <button type="submit" class="btn btn-primary">🔍 ძებნა</button>
+    <a href="@Url.Action("Index", "CompanyBarrels")" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
+
+    @* --- გამყოფი ხაზი (ვიზუალური დაშორებისთვის) --- *@
+    <div class="vr mx-4"></div>
+
+    @* ექსპორტი *@
+    <a asp-action="ExportToExcel"
+       asp-route-search1="@Context.Request.Query["search1"]"
+       asp-route-search2="@Context.Request.Query["search2"]"
+
+       class="btn btn-excel text-white">
+        <i class="bi bi-file-earmark-excel-fill me-2"></i> ექსპორტი
+    </a>
+
+    <!-- ✅ ღილაკი "უკან" მარჯვნივ გადავა -->
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary ms-auto">🔙 უკან</a>
+</form>
+
+<!-- სათაურების ცხრილი (დასახელებული სვეტები) -->
+<div class="table table-striped" style="max-height: 480px; overflow-y: auto;">
+<table class="table table-striped fixed-table" style="border-collapse: separate; border-spacing: 0px;">
+        <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+        <tr>
+            <th style="text-align: center;width: 10%;">სამ/ფორმა</th>
+            <th style="text-align: center;width: 10%;">ლოტის კოდი</th>
+            <th style="text-align: center;width: 15%;">საიდენტ. კოდი</th>
+            <th style="text-align: left;width: 35%;">კომპანია/პირი</th>
+            <th style="text-align: left;width: 10%;">რაოდენობა</th>
+            <th style="text-align: center;width: 15%;"></th>
+        </tr>
+    </thead>
+        <tbody>
+            @foreach (var company in Model)
+            {
+                <tr>
+                    <td style="text-align: center;width: 10%;">@company.CompanyTypeName</td>
+                    <td style="text-align: center;width: 10%;">@company.CompanyLot</td>
+                    <td style="text-align: center;width: 15%;">@company.IdentifierCode</td>
+                    <td style="text-align: left;width: 35%;">@company.CompanyName</td>
+                    <td style="text-align: center;width: 10%;">@company.TotalBarrels</td>
+                    <td style="text-align: center;width: 15%;">
+                        <!-- ღილაკი, რომელიც გადადის Companies-ის დეტალური გვერდზე, სადაც გამოჩნდება შერჩეული კომპანიის მარაგის (კასრების) ჩამონათვალი -->
+                        <a asp-controller="CompanyBarrelDetails" asp-action="Index" asp-route-companyId="@company.CompanyID"
+                           class="btn btn-outline-success">🔍 დეტალურად</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <style>
+        .main-container {
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+    </style>
+</div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <!-- Add Font Awesome for icons if not already in _Layout.cshtml -->
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit-id.js" crossorigin="anonymous"></script>
+    <!-- Replace 'your-font-awesome-kit-id.js' with your actual Font Awesome kit ID -->
+}

@@ -1,0 +1,229 @@
+﻿@model InventoryManagementWebApp.Models.CompanyBarrelDetailsViewModel
+
+@{
+    ViewData["Title"] = "🏭 კომპანიის კასრები"; // Consistent emoji in ViewData title
+}
+
+@{
+    var numberFormatInfo = new System.Globalization.NumberFormatInfo
+    {
+        NumberGroupSeparator = " ",
+        NumberDecimalSeparator = "."
+    };
+}
+
+<div class="main-container">
+	<div class="summary-card">
+        <h1 class="main-title">@ViewData["Title"] - @Model.CompanyType @Model.CompanyName</h1>
+        <span class="summary-value">( ლოტი: @Model.CompanyLot</span>
+        <span class="summary-value">ID კოდი: @Model.IdentifierCode )</span>
+    </div>
+
+    <!-- Search Form and Buttons - Using search-form-container as in the reference -->
+    <form method="get" action="@Url.Action("Index", "CompanyBarrelDetails", new { companyId = Model.CompanyID })"
+          class="search-form-container d-flex align-items-center flex-wrap gap-2">
+
+        <input type="hidden" name="companyId" value="@Model.CompanyID" />
+
+        @* --- საძიებო ველები (ცოტა შევზღუდოთ სიგანეში, რომ არ გაიწelოს) --- *@
+        <input type="text" name="search1"
+               placeholder="ძიება სასმელის სახელით..."
+               class="form-control"
+               style="max-width: 250px;"
+               value="@Context.Request.Query["search1"]" />
+
+        <input type="text" name="search2"
+               placeholder="ძიება კატეგორიით..."
+               class="form-control"
+               style="max-width: 250px;"
+               value="@Context.Request.Query["search2"]" />
+
+        @* --- ძებნის ღილაკები --- *@
+        <button type="submit" class="btn btn-primary">🔍 ძებნა</button>
+        <a href="@Url.Action("Index", "CompanyBarrelDetails", new { companyId = Model.CompanyID })" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
+
+        @* --- გამყოფი ხაზი (ვიზუალური დაშორებისთვის) --- *@
+        <div class="vr mx-5"></div>
+
+        @* --- მოქმედების ღილაკები --- *@
+
+        @* 1. ახალი კასრი *@
+        <a asp-controller="CompanyBarrelDetails" asp-action="Create" asp-route-companyId="@Model.CompanyID"
+           class="btn btn-success">
+            ➕ ახალი კასრი
+        </a>
+
+        @* --- გამყოფი ხაზი (ვიზუალური დაშორებისთვის) --- *@
+        <div class="vr mx-2"></div>
+
+        @* 2. არქივი *@
+        <a asp-action="Archive" asp-route-companyId="@Model.CompanyID" class="btn btn-warning text-dark">
+            <i class="bi bi-archive-fill me-1"></i> არქივი
+        </a>
+
+        @* 3. უკან (ms-auto კლასით გავწიოთ სულ მარჯვნივ, თუ გსურთ) *@
+        <a asp-controller="CompanyBarrels" asp-action="Index" @* asp-route-companyId="@Model.CompanyID" *@
+           class="btn btn-secondary ms-auto">
+            🔙 უკან
+        </a>
+
+    </form>
+
+    <div class="summary-card">
+        @* აქტიური კასრები *@
+        <div class="summary-item">
+            <span class="summary-value" title="აქტიური კასრები">
+                <i class="bi bi-box-seam summary-icon"></i>აქტიური: @Model.Barrels.Count
+            </span>
+        </div>
+
+        @* არქივირებული კასრები *@
+        <div class="summary-item">
+            <span class="summary-value text-muted" title="არქივში არსებული კასრები">
+                <i class="bi bi-archive summary-icon text-secondary"></i>არქივში: @Model.ArchivedBarrelsCount
+            </span>
+        </div>
+
+        @* მარაგი (ლიტრები) *@
+        <div class="summary-item">
+            <span class="summary-value">
+                <i class="bi bi-droplet-half summary-icon"></i>მარაგი: @Model.Barrels.Sum(b => b.CurrentVolume).ToString("N2", numberFormatInfo) ლ
+            </span>
+        </div>
+    </div>
+
+    <!-- Scrollable Table - Using table-responsive with inline styles as in the reference -->
+    <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+        <table class="table table-striped company-barrel-details-table">
+            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                <tr>
+                    <th style="width: 4%;">ID</th>
+                    <th style="width: 21%;">სასმელის სახელი</th>
+                    <th style="width: 7%;">ტიპი</th>
+                    <th style="width: 7%;">კატეგორია</th>
+                    <th style="width: 8%;">ფერი</th>
+                    <th style="width: 13%;">შაქრიანობა</th>
+                    <th style="width: 10%; text-align: right;">ნაშთი</th>
+                    <th style="width: 5%;">წელი</th>
+                    <th style="width: 7%;">წელი %</th>
+                    <th style="width: 8%;">სუფთა %</th>
+                    <th style="width: 10%;">ქმედება</th> @* Adjusted width for button and text-center for consistency *@
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var barrel in Model.Barrels)
+                {
+                    <tr>
+                        <td>@barrel.BarrelID</td>
+                        <td>@barrel.BeverageName</td>
+                        <td>@barrel.ProductType</td>
+                        <td>@barrel.Category</td>
+                        <td>@barrel.Color</td>
+                        <td>@barrel.Sweetness</td>
+                        <td style="text-align: right;">@barrel.CurrentVolume.ToString("N2", numberFormatInfo)</td>
+                        <td>@barrel.Year</td>
+                        <td>@barrel.YearPercentage</td>
+                        <td>@barrel.PurePercentage</td>
+                        <td class="d-flex justify-content-start gap-2">
+
+                            <a asp-controller="Operations" asp-action="Index" asp-route-barrelId="@barrel.BarrelID"
+                               class="btn btn-outline-success btn-sm" title="ოპერაციები">
+                                <i class="bi bi-gear-fill"></i> ოპერაცია
+                            </a>
+                            @if (barrel.IsDeletable)  @* თუ მხოლოდ ადმინისტრატორისთვის გვინდა მაშინ ასე: @if (User.IsInRole("Admin") && barrel.IsDeletable) *@
+                            {
+                                <a asp-action="Edit" asp-route-id="@barrel.BarrelID"
+                                   class="btn btn-warning btn-sm ms-2" title="რედაქტირება">
+                                    <i class="bi bi-pencil-fill"></i> </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+        (function () {
+            // Safely deserialize TempData messages into JS using JSON serialization
+            var successMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["SuccessMessage"]));
+            var errorMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ErrorMessage"]));
+
+            if (successMessage) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'წარმატება',
+                    text: successMessage,
+                    showConfirmButton: true,    // <-- ეს გახადეთ true
+                    confirmButtonText: 'OK'     // <-- დაამატეთ ღილაკის ტექსტი
+                });
+            }
+
+            if (errorMessage) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'შეცდომა',
+                    text: errorMessage,
+                    showConfirmButton: true,
+                    confirmButtonText: 'გასაგებია'
+                });
+            }
+        })();
+    </script>
+
+    <!-- Add Font Awesome for icons if not already in _Layout.cshtml -->
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit-id.js" crossorigin="anonymous"></script>
+    <!-- Replace 'your-font-awesome-kit-id.js' with your actual Font Awesome kit ID -->
+
+<style>
+     .summary-card {
+         background-color: #ffffff;
+         border-radius: 8px;
+         padding: 10px 30px;
+         margin-bottom: 15px;
+         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* მსუბუქი ჩრდილები */
+         border-left: 5px solid #0d6efd; /* ლურჯი აქცენტი მარცხნივ */
+         display: flex;
+         flex-wrap: wrap;
+         gap: 50px; /* დაშორება ელემენტებს შორის */
+         align-items: center;
+     }
+
+     .summary-item {
+         display: flex;
+         flex-direction: row;
+     }
+
+     .summary-label {
+         font-size: 0.85rem;
+         text-transform: uppercase;
+         color: #6c757d; /* ნაცრისფერი ტექსტი სათაურისთვის */
+         font-weight: 700;
+         letter-spacing: 0.5px;
+         margin-bottom: 5px;
+     }
+
+     .summary-value {
+         font-size: 1.2rem;
+         font-weight: 600;
+         color: #212529; /* მუქი ტექსტი მნიშვნელობისთვის */
+         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+     }
+
+     /* აიქონების სტილი (სურვილისამებრ) */
+     .summary-icon {
+         color: #0d6efd;
+         margin-right: 8px;
+         font-size: 1.1rem;
+     }
+</style>
+}

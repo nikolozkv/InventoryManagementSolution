@@ -1,0 +1,1080 @@
+﻿<!DOCTYPE html>
+<html lang="ge">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - InventoryManagementWebApp</title>
+
+    <!-- Environment indicator for development purposes -->
+    <meta name="environment" content="@Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")" />
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <!-- Your site-specific CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <!-- Auto-generated CSS for isolated components -->
+    <link rel="stylesheet" href="~/InventoryManagementWebApp.styles.css" asp-append-version="true" />
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Combined Sidebar & Main Content CSS -->
+    <style>
+        :root {
+            --sidebar-width: 250px; /* Default width when open */
+            --button-size: 30px; /* Width and height of the button */
+            --button-margin: 15px; /* Margin from screen edge when closed */
+            --button-offset-from-sidebar-edge: 15px; /* How far button is from sidebar's right edge */
+            --header-height: 60px; /* Approximate height of your navbar, adjust as needed */
+            /* Calculate full width the button occupies for positioning */
+            --button-full-width: calc(var(--button-size) + var(--button-offset-from-sidebar-edge));
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            padding-top: var(--header-height); /* Ensure content doesn't go under fixed header */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+
+        /* Adjust header to be fixed at the top */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 999; /* Below sidebar/button, but above main content */
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,.05);
+        }
+
+        /* F1 Clipboard Compact Overlay Box */
+        .f1-clipboard-overlay {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150%);
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 12px;
+            padding: 6px 8px;
+            z-index: 1300; /* Above everything */
+            
+            /* ====== F1 MENU ANIMATION - TEMPORARILY DISABLED ====== */
+            /* Uncomment the line below to re-enable F1 menu slide animation */
+            /* transition: transform 0.3s ease-in-out; */
+            /* ===================================================== */
+            
+            /* box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            min-width: 500px;
+            max-width: 700px;
+        }
+
+        .f1-clipboard-overlay.show {
+            transform: translateX(-50%) translateY(-10%);
+        }
+
+        .f1-clipboard-overlay.no-animation {
+            transition: none !important;
+        }
+
+        .f1-clipboard-overlay .f1-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .f1-clipboard-overlay .f1-close:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .f1-clipboard-overlay .f1-form {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto;
+            gap: 12px;
+            align-items: center;
+            height: 40px;
+        }
+
+        .f1-clipboard-overlay .f1-control {
+            background: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 0 12px;
+            font-size: 0.9rem;
+            color: #333;
+            transition: all 0.2s ease;
+            height: 40px;
+            box-sizing: border-box;
+            line-height: 1;
+        }
+
+        .f1-clipboard-overlay .f1-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .f1-clipboard-overlay .f1-select {
+            min-width: 180px;
+        }
+
+        .f1-clipboard-overlay .f1-input {
+            min-width: 120px;
+        }
+
+        .f1-clipboard-overlay .f1-date {
+            min-width: 140px;
+        }
+
+        .f1-clipboard-overlay .f1-btn {
+            background: rgba(220, 53, 69, 0.9);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: white;
+            border-radius: 6px;
+            padding: 0 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .f1-clipboard-overlay .f1-btn:hover {
+            background: rgba(220, 53, 69, 1);
+            border-color: rgba(220, 53, 69, 0.5);
+        }
+
+        /* Responsive design for smaller screens */
+        @@media (max-width: 768px) {
+            .f1-clipboard-overlay {
+                min-width: 320px;
+                max-width: 90vw;
+                left: 50%;
+                right: auto;
+            }
+
+            .f1-clipboard-overlay .f1-form {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                height: auto;
+            }
+
+            .f1-clipboard-overlay .f1-control,
+            .f1-clipboard-overlay .f1-btn {
+                height: 40px;
+            }
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            height: 100%;
+            width: 0; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #ffffff;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+            overflow-x: hidden;
+            padding-top: var(--header-height); /* Adjust padding for content below header */
+            z-index: 1000; /* ABOVE header and main content */
+            white-space: nowrap;
+            transition: width 0.3s ease;
+        }
+
+            .sidebar.open {
+                width: var(--sidebar-width);
+            }
+
+            .sidebar a {
+                padding: 10px 20px;
+                text-decoration: none;
+                font-size: 16px;
+                color: #212529;
+                display: block;
+                transition: background 0.2s;
+            }
+
+                .sidebar a:hover {
+                    background-color: #f1f1f1;
+                    border-radius: 4px;
+                }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            text-align: left;
+        }
+
+            .sidebar-footer strong {
+                display: block;
+                margin-bottom: 5px;
+                color: #212529;
+            }
+
+            .sidebar-footer .btn {
+                width: 100%;
+            }
+
+        /* Burger button */
+        .openbtn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            width: var(--button-size);
+            height: var(--button-size);
+            cursor: pointer;
+            z-index: 1100; /* Highest z-index to be on top of everything */
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+            .openbtn span {
+                display: block;
+                width: 100%;
+                height: 3px;
+                background-color: #212529;
+                margin: 6px 0;
+                border-radius: 2px;
+                transition: transform 0.3s ease, opacity 0.3s ease;
+            }
+
+        .modal-backdrop.show {
+            background-color: rgba(0, 0, 0, 0.75); /* Darker backdrop */
+            backdrop-filter: blur(6px); /* Nice blur effect */
+            z-index: 1040 !important; /* Force correct stacking */
+        }
+
+        #customBackdrop {
+            z-index: 1040; /* One level below modal */
+        }
+
+            /* X transformation */
+            .openbtn.active span:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 8px);
+            }
+
+            .openbtn.active span:nth-child(2) {
+                opacity: 0;
+            }
+
+            .openbtn.active span:nth-child(3) {
+                transform: rotate(-45deg) translate(5px, -8px);
+            }
+
+        /* Resizer (still useful if you want a resizable overlay sidebar) */
+        .resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 6px;
+            height: 100%;
+            cursor: ew-resize;
+            background-color: transparent;
+            z-index: 1001; /* Above sidebar content */
+        }
+
+        /* Main content area: No shifting needed */
+        #mainContent {
+            position: relative; /* Maintain position for child elements if needed */
+            z-index: 1; /* Below sidebar/button */
+        }
+
+        .modal {
+            z-index: 1050 !important; /* Ensure modal is above the backdrop */
+        }
+
+        .modal-backdrop {
+            z-index: 1040 !important; /* Ensure backdrop is below the modal */
+        }
+
+        .modal-stack {
+            z-index: 1030 !important; /* Ensure stacked backdrops are below */
+        }
+
+        .clipboard-hotkey-hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease, background-color 0.3s ease;
+        }
+
+        .clipboard-hotkey-hint.show {
+            opacity: 1;
+        }
+
+        .clipboard-hotkey-hint.autosaved {
+            background: rgba(40, 167, 69, 0.9);
+        }
+
+        .clipboard-hotkey-hint.cleared {
+            background: rgba(220, 53, 69, 0.9);
+        }
+    </style>
+    <link rel="manifest" href="@Url.Content("~/manifest.json")" />
+    <meta name="theme-color" content="#6c757d">
+
+</head>
+
+<body>
+    <!-- F1 Clipboard Compact Overlay -->
+    <div id="f1ClipboardOverlay" class="f1-clipboard-overlay">
+        @* <button type="button" class="f1-close" id="f1CloseBtn">×</button> *@
+        
+        <div class="f1-form">
+            <select id="f1ClipboardSabuti" class="f1-control f1-select">
+                <option value="">აირჩიეთ საბუთის ტიპი</option>
+            </select>
+            
+            <input type="text" id="f1ClipboardNumber" class="f1-control f1-input" placeholder="ნომერი" maxlength="50">
+            
+            <input type="date" id="f1ClipboardDate" class="f1-control f1-date" max="@DateTime.Now.ToString("yyyy-MM-dd")">
+            
+            <button type="button" class="f1-btn" id="f1ClearClipboardBtn" title="გასუფთავება - Clear all clipboard data">
+                <i class="bi bi-trash"></i>
+                გასუფთავება
+            </button>
+        </div>
+    </div>
+
+    <!-- Burger Button -->
+    <button id="sidebarToggle" class="openbtn" onclick="toggleSidebar()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Sidebar -->
+    <div id="mySidebar" class="sidebar">
+        <a class="btn btn-outline-default btn-lg mx-lg-3 mb-1" href="/">მთავარი</a>
+        <a class="btn btn-outline-default btn-lg mx-lg-3 mb-1" href="/Companies">კომპანიები</a>
+        <a class="btn btn-outline-default btn-lg mx-lg-3 mb-1" href="/Beverages">სასმელები</a>
+        <a class="btn btn-outline-default btn-lg mx-lg-3 mb-1" href="/DocumentType">დოკუმენტები</a>
+        <a class="btn btn-outline-default btn-lg mx-lg-3 mb-1" href="/OperationDefinitions">მეთოდები</a>
+        <a class="btn btn-outline-default btn-lg mx-lg-3 mb-1" href="/CompanyBarrels/Index">წარმოებები</a>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <a class="btn btn-outline-danger btn-lg mx-lg-3 mb-1" href="/Admin/Users">Manage Users</a>
+        }
+
+        <!-- Footer -->
+        <div class="sidebar-footer text-center">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <strong>@User.FindFirst("FirstName")?.Value @User.FindFirst("LastName")?.Value</strong>
+                <form asp-action="Logout" asp-controller="Account" method="post">
+                    <button class="btn btn-outline-danger btn-sm d-flex justify-content-center align-items-center" type="submit">Logout</button>
+                </form>
+            }
+            @* <div class="d-flex gap-1 flex-column">
+                <button id="install-btn" class="btn btn-outline-primary btn-sm d-flex justify-content-center align-items-center" title="აფლიკაციის დაყენება - ადმინისტრატორის უფლებების გარეშე">
+                    <i class="bi bi-download me-1"></i>აპლიკაციის დაინსტალირება
+                </button>
+                <button class="btn btn-outline-info btn-sm d-flex justify-content-center align-items-center" data-bs-toggle="modal" data-bs-target="#installGuideModal" title="დაყენების ინსტუქცია">
+                    <i class="bi bi-question-circle me-1"></i>როგორ დავაყენო?
+                </button>
+            </div> *@
+        </div>
+
+        <!-- Resizer -->
+        <div class="resizer" id="resizer"></div>
+    </div>
+
+    <!-- The main content area, now with ID for JS/CSS -->
+    <div id="mainContent" class="container-fluid container-fluid-90">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Hotkey hint -->
+    <div class="clipboard-hotkey-hint" id="clipboardHint">
+        F1 - Clipboard
+    </div>
+
+    <!-- Debug button for testing F1 menu (remove in production) -->
+    @* <button id="debugF1Button" style="position: fixed; bottom: 60px; right: 20px; z-index: 999; background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-size: 12px;">
+        Test F1 Menu
+    </button> *@
+
+    <!-- Scripts - ensure jQuery and Bootstrap are loaded -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Sidebar JavaScript Logic -->
+    <script>
+        const sidebar = document.getElementById("mySidebar");
+        const toggleBtn = document.getElementById("sidebarToggle");
+        const resizer = document.getElementById("resizer");
+        const root = document.documentElement;
+
+        let isResizing = false;
+        const MIN_SIDEBAR_WIDTH = 180;
+        const MAX_SIDEBAR_WIDTH = 500;
+
+        const BUTTON_SIZE = parseFloat(getComputedStyle(root).getPropertyValue('--button-size').replace('px', ''));
+        const BUTTON_OFFSET_FROM_SIDEBAR_EDGE = parseFloat(getComputedStyle(root).getPropertyValue('--button-offset-from-sidebar-edge').replace('px', ''));
+
+        function toggleSidebar() {
+            if (sidebar.classList.contains("open")) {
+                sidebar.classList.remove("open");
+                toggleBtn.classList.remove("active");
+                toggleBtn.style.position = 'fixed';
+                toggleBtn.style.left = '15px';
+                toggleBtn.style.transition = 'none';
+            } else {
+                sidebar.classList.add("open");
+                toggleBtn.classList.add("active");
+                toggleBtn.style.position = 'fixed';
+                toggleBtn.style.left = '15px';
+                toggleBtn.style.transition = 'none';
+            }
+        }
+
+        // Service Worker registration for production mode
+        if ('serviceWorker' in navigator) {
+          // In development on localhost, unregister existing service workers first
+          if (location.hostname === 'localhost' || location.hostname.includes('localhost')) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              for(let registration of registrations) {
+                console.log('Unregistering old service worker:', registration);
+                registration.unregister();
+              }
+            });
+            console.log('Service Worker disabled for localhost development');
+          } 
+          // Register service worker for production (HTTPS)
+          else if (location.protocol === 'https:') {
+            navigator.serviceWorker.register('@Url.Content("~/service-worker.js")')
+              .then((registration) => {
+                console.log('Service Worker Registered for Production', registration);
+                registration.update();
+              })
+              .catch((error) => {
+                console.error('Service Worker Registration Failed:', error);
+              });
+          }
+        }
+
+        // Check if the app is running as an installed PWA
+        const isPWAInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        if (isPWAInstalled) {
+            const installButton = document.getElementById('install-btn');
+            if (installButton) {
+                installButton.style.display = 'none';
+            }
+        }
+
+        // Global Clipboard System with localStorage
+        const CLIPBOARD_STORAGE_KEY = 'inventoryClipboardData';
+        const F1_MENU_STATE_KEY = 'inventoryF1MenuState';
+        let globalClipboardData = {
+            sabuti: '',
+            sabutiText: '',
+            number: '',
+            date: ''
+        };
+
+        // Load clipboard data from localStorage on page load
+        function loadClipboardFromStorage() {
+            try {
+                const stored = localStorage.getItem(CLIPBOARD_STORAGE_KEY);
+                if (stored) {
+                    globalClipboardData = JSON.parse(stored);
+                    console.log('Clipboard data loaded from localStorage:', globalClipboardData);
+                }
+            } catch (error) {
+                console.error('Error loading clipboard data from localStorage:', error);
+                globalClipboardData = {
+                    sabuti: '',
+                    sabutiText: '',
+                    number: '',
+                    date: ''
+                };
+            }
+        }
+
+        // Save F1 menu state to localStorage
+        function saveF1MenuState(isOpen) {
+            try {
+                localStorage.setItem(F1_MENU_STATE_KEY, JSON.stringify(isOpen));
+                console.log('F1 menu state saved:', isOpen);
+            } catch (error) {
+                console.error('Error saving F1 menu state to localStorage:', error);
+            }
+        }
+
+        // Load F1 menu state from localStorage
+        function loadF1MenuState() {
+            try {
+                const stored = localStorage.getItem(F1_MENU_STATE_KEY);
+                if (stored) {
+                    return JSON.parse(stored);
+                }
+            } catch (error) {
+                console.error('Error loading F1 menu state from localStorage:', error);
+            }
+            return false; /* Default to closed */
+        }
+
+        // Save clipboard data to localStorage
+        function saveClipboardToStorage() {
+            try {
+                localStorage.setItem(CLIPBOARD_STORAGE_KEY, JSON.stringify(globalClipboardData));
+                console.log('Clipboard data saved to localStorage:', globalClipboardData);
+                showAutosaveIndicator();
+            } catch (error) {
+                console.error('Error saving clipboard data to localStorage:', error);
+            }
+        }
+
+        // Show autosave indicator using clipboard hint
+        function showAutosaveIndicator() {
+            const hint = document.getElementById('clipboardHint');
+            hint.textContent = '💾 ავტოშენახვა';
+            hint.classList.remove('cleared');
+            hint.classList.add('autosaved', 'show');
+            setTimeout(() => {
+                hint.classList.remove('show', 'autosaved');
+                hint.textContent = 'F1 - Clipboard';
+            }, 1500);
+        }
+
+        // Auto-save function with debouncing
+        let autosaveTimeout;
+        function autoSaveClipboard() {
+            clearTimeout(autosaveTimeout);
+            autosaveTimeout = setTimeout(() => {
+                const sabutiSelect = document.getElementById('f1ClipboardSabuti');
+                const sabutiValue = sabutiSelect ? sabutiSelect.value : '';
+                const sabutiText = sabutiSelect && sabutiSelect.selectedIndex >= 0 ? 
+                    sabutiSelect.options[sabutiSelect.selectedIndex].text : '';
+                const number = document.getElementById('f1ClipboardNumber') ? 
+                    document.getElementById('f1ClipboardNumber').value : '';
+                const date = document.getElementById('f1ClipboardDate') ? 
+                    document.getElementById('f1ClipboardDate').value : '';
+
+                // Update global clipboard data
+                globalClipboardData = {
+                    sabuti: sabutiValue,
+                    sabutiText: sabutiText === 'აირჩიეთ საბუთის ტიპი' ? '' : sabutiText,
+                    number: number,
+                    date: date
+                };
+
+                saveClipboardToStorage();
+            }, 150); // Autosave after 1 second of inactivity
+        }
+
+        // Global function to get clipboard data
+        window.getClipboardData = function() {
+            return globalClipboardData;
+        };
+
+        // Global function to set clipboard data
+        window.setClipboardData = function(data) {
+            globalClipboardData = { ...globalClipboardData, ...data };
+            saveClipboardToStorage();
+        };
+
+        // Load clipboard data on page load
+        loadClipboardFromStorage();
+
+        // F1 Menu Variables
+        const f1ClipboardOverlay = document.getElementById('f1ClipboardOverlay');
+        const f1CloseBtn = document.getElementById('f1CloseBtn');
+        let isF1MenuOpen = false;
+
+        // Function to show F1 menu
+        function showF1Menu() {
+            if (!isF1MenuOpen) {
+                f1ClipboardOverlay.classList.add('show');
+                isF1MenuOpen = true;
+
+                // Save state to localStorage and sessionStorage so navigation preserves open during this session
+                saveF1MenuState(true);
+                try { sessionStorage.setItem('inventoryF1MenuOpenedThisSession', 'true'); } catch (e) { }
+
+                // Load document types and clipboard data when menu opens (ensure DOM ready)
+                schedulePopulateF1();
+                
+                // Add event listeners for autosave
+                addF1EventListeners();
+
+                console.log('F1 menu opened');
+                showClipboardHint();
+            }
+        }
+
+        // Function to hide F1 menu
+        function hideF1Menu() {
+            if (isF1MenuOpen) {
+                f1ClipboardOverlay.classList.remove('show');
+                isF1MenuOpen = false;
+
+                // Save state to localStorage and clear session flag
+                saveF1MenuState(false);
+                try { sessionStorage.removeItem('inventoryF1MenuOpenedThisSession'); } catch (e) { }
+
+                console.log('F1 menu closed');
+            }
+        }
+
+        // Function to restore F1 menu state on page load
+        // Only restores visual open state if the user opened the menu during this session (sessionStorage flag)
+        function restoreF1MenuState() {
+            try {
+                const stored = loadF1MenuState();
+                const openedThisSession = (function(){ try { return sessionStorage.getItem('inventoryF1MenuOpenedThisSession') === 'true'; } catch(e){ return false; } })();
+                if (stored && openedThisSession) {
+                    const overlay = document.getElementById('f1ClipboardOverlay');
+                    if (overlay) {
+                        overlay.classList.add('no-animation', 'show');
+                        isF1MenuOpen = true;
+                        // Ensure event listeners are attached when restoring open state across navigation
+                        try { addF1EventListeners(); } catch (e) { console.error('addF1EventListeners on restore failed', e); }
+                     }
+                 }
+            } catch (error) {
+                console.error('Error in early F1 menu restoration:', error);
+            }
+        }
+
+        // Early restoration of F1 menu state to prevent animation on page load
+        // Do NOT auto-open on cold page load. Only restore visual 'open' state if the user opened F1 in this session.
+        (function() {
+            try {
+                const storedLocal = loadF1MenuState();
+                const openedThisSession = (function(){ try { return sessionStorage.getItem('inventoryF1MenuOpenedThisSession') === 'true'; } catch(e){ return false; } })();
+
+                // Load clipboard data early so it's available globally
+                loadClipboardFromStorage();
+
+                // If user opened F1 during this session and the localStorage state is open, restore the overlay immediately
+                if (storedLocal && openedThisSession) {
+                    const overlay = document.getElementById('f1ClipboardOverlay');
+                    if (overlay) {
+                        overlay.classList.add('no-animation', 'show');
+                        // ensure internal state reflects this
+                        isF1MenuOpen = true;
+                        // Ensure event listeners are attached when restoring open state across navigation
+                        try { addF1EventListeners(); } catch (e) { console.error('addF1EventListeners on restore failed', e); }
+                     }
+                 }
+
+                // Preload document types and clipboard data so fields are populated when user opens
+                // But DOM elements may not exist yet; schedule populate after DOM ready
+                schedulePopulateF1();
+            } catch (error) {
+                console.error('Error in early F1 menu restoration:', error);
+            }
+        })();
+
+        // Ensure F1 population runs after DOM is ready
+        async function schedulePopulateF1() {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', async function onReady() {
+                    document.removeEventListener('DOMContentLoaded', onReady);
+                    try {
+                        await loadDocumentTypesForF1();
+                        loadCurrentClipboardDataF1();
+                        // Attach event listeners after fields exist so autosave continues when menu remains open across pages
+                        try { addF1EventListeners(); } catch (e) { console.error('addF1EventListeners failed in schedulePopulateF1', e); }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                });
+            } else {
+                try {
+                    await loadDocumentTypesForF1();
+                    loadCurrentClipboardDataF1();
+                    // Attach event listeners after fields exist so autosave continues when menu remains open across pages
+                    try { addF1EventListeners(); } catch (e) { console.error('addF1EventListeners failed in schedulePopulateF1', e); }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        // Clear clipboard data for F1 menu
+        document.addEventListener('DOMContentLoaded', function() {
+            // Do not auto-open the F1 menu here. The IIFE at top handles restoring visual state when appropriate.
+            
+            // Ensure clipboard data and types are loaded globally so fields populate on any page
+            loadClipboardFromStorage();
+            
+            // Add debug button click handler
+            const debugButton = document.getElementById('debugF1Button');
+            if (debugButton) {
+                debugButton.addEventListener('click', function() {
+                    console.log('Debug button clicked, toggling F1 menu');
+                    toggleF1Menu();
+                });
+            }
+            
+            const clearBtn = document.getElementById('f1ClearClipboardBtn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    console.log('Clear button clicked'); // Debug log
+                    
+                    // Reset global clipboard data
+                    globalClipboardData = {
+                        sabuti: '',
+                        sabutiText: '',
+                        number: '',
+                        date: ''
+                    };
+
+                    // Clear form fields
+                    const sabutiSelect = document.getElementById('f1ClipboardSabuti');
+                    const numberInput = document.getElementById('f1ClipboardNumber');
+                    const dateInput = document.getElementById('f1ClipboardDate');
+                    
+                    if (sabutiSelect) sabutiSelect.value = '';
+                    if (numberInput) numberInput.value = '';
+                    if (dateInput) dateInput.value = '';
+
+                    // Clear localStorage for clipboard data only (keep menu state)
+                    try {
+                        localStorage.removeItem(CLIPBOARD_STORAGE_KEY);
+                        console.log('localStorage cleared'); // Debug log
+                    } catch (error) {
+                        console.error('Error clearing clipboard data from localStorage:', error);
+                    }
+
+                    console.log('Clipboard data cleared');
+                    showClearHint();
+                });
+            } else {
+                console.error('Clear button not found');
+            }
+        });
+
+        // Function to show clear hint
+        function showClearHint() {
+            const hint = document.getElementById('clipboardHint');
+            hint.textContent = '🗑️ გასუფთავებულია';
+            hint.classList.remove('autosaved');
+            hint.classList.add('cleared', 'show');
+            setTimeout(() => {
+                hint.classList.remove('show', 'cleared');
+                hint.textContent = 'F1 - Clipboard';
+            }, 2000);
+        }
+
+        // Function to toggle F1 menu
+        function toggleF1Menu() {
+            if (isF1MenuOpen) {
+                hideF1Menu();
+            } else {
+                showF1Menu();
+            }
+        }
+
+        // F1 Key Event Handler for Global Clipboard
+        document.addEventListener('keydown', function(event) {
+            // F1 key code is 112
+            if (event.key === 'F1' || event.keyCode === 112) {
+                event.preventDefault(); // Prevent browser's default F1 behavior
+                console.log('F1 key pressed'); // Debug log
+                toggleF1Menu();
+            }
+            
+            // ESC key to close F1 menu
+            if (event.key === 'Escape' && isF1MenuOpen) {
+                console.log('ESC key pressed, closing F1 menu'); // Debug log
+                hideF1Menu();
+            }
+        });
+
+        // ======= F1 helper implementations (fixes) =======
+        // Populate the F1 document types dropdown. Prefer copying from the current page's DocumentType select
+        // to avoid extra network calls and preserve server-side localization.
+        async function loadDocumentTypesForF1() {
+             try {
+                 const target = document.getElementById('f1ClipboardSabuti');
+                 if (!target) return;
+
+                // Keep the default option
+                target.innerHTML = '<option value="">აირჩიეთ საბუთის ტიპი</option>';
+
+                // 1) Prefer loading directly from database via API endpoint
+                try {
+                    const resp = await fetch('/api/documenttypes');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            const cache = [];
+                            data.forEach(item => {
+                                const val = item.value ?? item.id ?? item.documentTypeID ?? '';
+                                const txt = item.text ?? item.name ?? item.documentTypeName ?? String(item);
+                                const opt = document.createElement('option');
+                                opt.value = val;
+                                opt.text = txt;
+                                target.appendChild(opt);
+                                cache.push({ value: val, text: txt });
+                            });
+                            try { localStorage.setItem('inventoryDocumentTypes', JSON.stringify(cache)); } catch (e) { }
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.warn('API documenttypes fetch failed, will fallback to page/cached values:', err);
+                }
+
+                // If API returned nothing or failed, try copying from page select or cache
+                const pageSelect = document.getElementById('DocumentTypeID');
+                if (pageSelect) {
+                    const copyOptionsAndCache = () => {
+                        const opts = Array.from(pageSelect.options || []);
+                        // ignore trivial default-only state
+                        const meaningful = opts.filter(o => o && o.text.trim() !== '');
+                        if (meaningful.length === 0) return false;
+
+                        const cache = [];
+                        target.innerHTML = '<option value="">აირჩიეთ საბუთის ტიპი</option>';
+                        meaningful.forEach(opt => {
+                            const text = opt.text.trim();
+                            const newOpt = document.createElement('option');
+                            newOpt.value = opt.value;
+                            newOpt.text = text;
+                            target.appendChild(newOpt);
+                            cache.push({ value: opt.value, text: text });
+                        });
+                        try { localStorage.setItem('inventoryDocumentTypes', JSON.stringify(cache)); } catch (e) { }
+                        return true;
+                    };
+
+                    // Try immediate copy
+                    if (copyOptionsAndCache()) {
+                        // also listen for future changes to keep cache fresh
+                        pageSelect.addEventListener('change', function() { try { copyOptionsAndCache(); loadCurrentClipboardDataF1(); } catch(e){ } });
+                        // If page uses select2 which only populates on open, listen for that event
+                        pageSelect.addEventListener('select2:open', function() { try { copyOptionsAndCache(); loadCurrentClipboardDataF1(); } catch(e){} });
+                        // also handle user interactions that may populate options (mousedown/focus)
+                        pageSelect.addEventListener('mousedown', function() { try { copyOptionsAndCache(); loadCurrentClipboardDataF1(); } catch(e){} });
+                        pageSelect.addEventListener('focus', function() { try { copyOptionsAndCache(); loadCurrentClipboardDataF1(); } catch(e){} });
+                        return;
+                    }
+
+                    // If not ready yet, observe mutations on the select to detect when options are added
+                    try {
+                        const mo = new MutationObserver((mutations, observer) => {
+                            if (copyOptionsAndCache()) {
+                                observer.disconnect();
+                                try { pageSelect.removeEventListener('change', copyOptionsAndCache); } catch(e){}
+                                try { loadCurrentClipboardDataF1(); } catch(e){}
+                            }
+                        });
+                        mo.observe(pageSelect, { childList: true, subtree: true });
+
+                        // Poll as a fallback in case MutationObserver doesn't catch the change (timeout 3s)
+                        const start = Date.now();
+                        const poll = setInterval(() => {
+                            if (copyOptionsAndCache() || Date.now() - start > 3000) {
+                                clearInterval(poll);
+                                mo.disconnect();
+                                try { loadCurrentClipboardDataF1(); } catch(e){}
+                            }
+                        }, 200);
+                    } catch (e) {
+                        // Fallback: simple poll
+                        const start = Date.now();
+                        const poll = setInterval(() => {
+                            if (copyOptionsAndCache() || Date.now() - start > 3000) {
+                                clearInterval(poll);
+                                try { loadCurrentClipboardDataF1(); } catch(e){}
+                            }
+                        }, 250);
+                    }
+                    return;
+                }
+
+                // 2) Try to populate from cached document types in localStorage
+                try {
+                    const cached = localStorage.getItem('inventoryDocumentTypes');
+                    if (cached) {
+                        const arr = JSON.parse(cached);
+                        if (Array.isArray(arr) && arr.length > 0) {
+                            arr.forEach(item => {
+                                const opt = document.createElement('option');
+                                opt.value = item.value ?? '';
+                                opt.text = item.text ?? '';
+                                target.appendChild(opt);
+                            });
+                            return; // done
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to read cached document types:', e);
+                }
+                
+                // 3) Fallback: try fetching from an API endpoint that returns an array [{ value, text }]
+                try {
+                    const resp = await fetch('/api/documenttypes');
+                    if (!resp.ok) throw new Error('Network response was not ok');
+                    const data = await resp.json();
+                    if (Array.isArray(data)) {
+                        const cache = [];
+                        data.forEach(item => {
+                            const val = item.value ?? item.id ?? item.documentTypeID ?? '';
+                            const txt = item.text ?? item.name ?? item.documentTypeName ?? String(item);
+                            const opt = document.createElement('option');
+                            opt.value = val;
+                            opt.text = txt;
+                            target.appendChild(opt);
+                            cache.push({ value: val, text: txt });
+                        });
+                        try { localStorage.setItem('inventoryDocumentTypes', JSON.stringify(cache)); } catch (e) { }
+                    }
+                } catch (err) {
+                    console.warn('Could not load document types for F1 dropdown:', err);
+                }
+
+             } catch (error) {
+                 console.error('Error in loadDocumentTypesForF1:', error);
+             }
+         }
+
+        // Load saved clipboard values into the F1 overlay fields
+        function loadCurrentClipboardDataF1() {
+            try {
+                const data = globalClipboardData || {};
+                const sabutiSelect = document.getElementById('f1ClipboardSabuti');
+                const numberInput = document.getElementById('f1ClipboardNumber');
+                const dateInput = document.getElementById('f1ClipboardDate');
+
+                if (sabutiSelect) {
+                    // Try set by value first
+                    let matched = false;
+                    if (data.sabuti) {
+                        sabutiSelect.value = data.sabuti;
+                        if (sabutiSelect.value) matched = true;
+                    }
+                    
+                    // If no value matched and we have a text, attempt to match by text
+                    if (!matched && data.sabutiText) {
+                        const wanted = data.sabutiText.toLowerCase().trim();
+                        const opts = Array.from(sabutiSelect.options);
+                        const match = opts.find(o => o.text.toLowerCase().trim() === wanted || o.text.toLowerCase().includes(wanted));
+                        if (match) {
+                            sabutiSelect.value = match.value;
+                            matched = true;
+                        }
+                    }
+
+                    // If still no match, but we have sabutiText or sabuti value, insert a fallback option so user sees stored value
+                    if (!matched && (data.sabutiText || data.sabuti)) {
+                        const fallbackText = data.sabutiText || data.sabuti || '(შენახული)';
+                        const fallbackVal = data.sabuti || '';
+                        const opt = document.createElement('option');
+                        opt.value = fallbackVal;
+                        opt.text = fallbackText + ' (შენახული)';
+                        // mark as dataset so we can remove later if needed
+                        opt.dataset.fallback = '1';
+                        sabutiSelect.appendChild(opt);
+                        sabutiSelect.value = opt.value;
+                    }
+                }
+
+                if (numberInput) numberInput.value = data.number || '';
+                if (dateInput) dateInput.value = data.date || '';
+
+            } catch (error) {
+                console.error('Error in loadCurrentClipboardDataF1:', error);
+            }
+        }
+
+        // Show the small clipboard hint briefly (used when opening F1)
+        function showClipboardHint() {
+            try {
+                const hint = document.getElementById('clipboardHint');
+                if (!hint) return;
+                hint.classList.add('show');
+                setTimeout(() => hint.classList.remove('show'), 1200);
+            } catch (e) {
+                console.error('Error showing clipboard hint:', e);
+            }
+        }
+
+        // Attach event listeners to F1 fields so autosave works
+        let _f1ListenersAdded = false;
+        function addF1EventListeners() {
+            if (_f1ListenersAdded) return;
+            try {
+                const sabutiSelect = document.getElementById('f1ClipboardSabuti');
+                const numberInput = document.getElementById('f1ClipboardNumber');
+                const dateInput = document.getElementById('f1ClipboardDate');
+
+                if (sabutiSelect) {
+                    sabutiSelect.addEventListener('change', function() {
+                        // update sabutiText for better matching
+                        const txt = sabutiSelect.options[sabutiSelect.selectedIndex]?.text || '';
+                        globalClipboardData.sabuti = sabutiSelect.value || '';
+                        globalClipboardData.sabutiText = (txt === 'აირჩიეთ საბუთის ტიპი') ? '' : txt;
+                        saveClipboardToStorage();
+                    });
+
+                    sabutiSelect.addEventListener('input', autoSaveClipboard);
+                }
+
+                if (numberInput) {
+                    numberInput.addEventListener('input', autoSaveClipboard);
+                }
+
+                if (dateInput) {
+                    dateInput.addEventListener('change', autoSaveClipboard);
+                    dateInput.addEventListener('input', autoSaveClipboard);
+                }
+
+                _f1ListenersAdded = true;
+            } catch (error) {
+                console.error('Error in addF1EventListeners:', error);
+            }
+        }
+
+        // Ensure clipboard is loaded early so other pages (e.g., Operations) can use it
+        // Clipboard data is loaded; document types and current data will be populated after DOM ready via schedulePopulateF1
+        loadClipboardFromStorage();
+    </script>
+    <div class="app-version">V 26.02.15</div>
+</body>
+</html>

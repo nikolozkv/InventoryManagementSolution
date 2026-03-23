@@ -1,0 +1,271 @@
+﻿@model InventoryManagementWebApp.Models.Barrel
+
+@{
+    ViewData["Title"] = "✏️ კასრის რედაქტირება";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-sm-12">
+
+            @if (ViewBag.ErrorMessage != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> @ViewBag.ErrorMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @* თუ მომხმარებელმა შეცვალა მონაცემები და დაეჯახა პასიურ კასრს *@
+            @if (ViewBag.PassiveBarrelID != null)
+            {
+                <div class="alert alert-warning shadow-sm border-warning">
+                    <h5 class="alert-heading"><i class="bi bi-archive-fill me-2"></i>ნაპოვნია არქივში!</h5>
+                    <p>თქვენს მიერ არჩეული პარამეტრებით კასრი არსებობს არქივში. ამის რედაქტირების ნაცვლად, ხომ არ გსურთ ძველის აღდგენა?</p>
+                    <hr>
+                    <a asp-action="Status" asp-route-id="@ViewBag.PassiveBarrelID" class="btn btn-warning fw-bold text-dark">
+                        <i class="bi bi-arrow-repeat me-1"></i> გადასვლა აღდგენის გვერდზე
+                    </a>
+                </div>
+            }
+
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-primary text-white p-3 rounded-top-3 d-flex align-items-center justify-content-center">
+                    <h2 class="card-title mb-0 fs-3">
+                        <span class="fw-bold">✏️ კასრის რედაქტირება</span>
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        @* აუცილებელი ველები *@
+                        <input type="hidden" asp-for="BarrelID" />
+                        <input type="hidden" asp-for="CompanyID" />
+                        <input type="hidden" asp-for="CreatedDate" />
+                        <input type="hidden" asp-for="IsActive" />
+                        <input type="hidden" asp-for="CurrentVolume" />
+
+                        <input type="hidden" id="SelectedBeverageID" asp-for="BeverageID" />
+
+                        @* --- 1. სასმელის სექცია --- *@
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-wine me-1"></i> არჩეული სასმელი:
+                            </label>
+                            <div class="card card-body p-0 border-0 mb-2">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover mb-0" id="selectedBeverageTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>სახელი</th>
+                                                <th>ტიპი</th>
+                                                <th>კატეგორია</th>
+                                                <th>ფერი</th>
+                                                <th>შაქრიანობა</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="selectedBeverageBody">
+                                            @if (Model.Beverage != null)
+                                            {
+                                                <tr>
+                                                    <td>@Model.Beverage.Name</td>
+                                                    <td>@(Model.Beverage.ProductType?.Name ?? "N/A")</td>
+                                                    <td>@(Model.Beverage.Category?.Name ?? "N/A")</td>
+                                                    <td>@(Model.Beverage.Color?.Name ?? "N/A")</td>
+                                                    <td>@(Model.Beverage.Sweetness?.Name ?? "N/A")</td>
+                                                </tr>
+                                            }
+                                            else
+                                            {
+                                                <tr><td colspan="5" class="text-center">სასმელი არ ჩანს</td></tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <button type="button" id="toggleBeverageSelection" class="btn btn-success mt-3 w-20">
+                                <i class="bi bi-search me-2"></i> სასმელის შეცვლა / ძიება
+                            </button>
+                            <span asp-validation-for="BeverageID" class="text-danger"></span>
+                        </div>
+
+                        @* --- 2. წლის სექცია --- *@
+                        <div class="mb-4">
+                            <label for="Year" class="form-label fw-semibold">
+                                <i class="bi bi-calendar-fill me-1"></i> მოსავლის წელი:
+                            </label>
+                            @{
+                                int currentYear = DateTime.Now.Year;
+                                var displayValue = Model.Year;
+                            }
+
+                            <div class="btn-group w-100 mb-2" role="group" aria-label="წლების სწრაფი არჩევა">
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('YearInput').value = '@currentYear'">
+                                    @currentYear
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('YearInput').value = '@(currentYear - 1)'">
+                                    @(currentYear - 1)
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('YearInput').value = '@(currentYear - 2)'">
+                                    @(currentYear - 2)
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('YearInput').value = '@(currentYear - 3)'">
+                                    @(currentYear - 3)
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('YearInput').value = '@(currentYear - 4)'">
+                                    @(currentYear - 4)
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('YearInput').value = '@(currentYear - 5)'">
+                                    @(currentYear - 5)
+                                </button>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="number" id="YearInput" asp-for="Year" class="form-control" list="vintageYears"
+                                       value="@displayValue"
+                                       placeholder="ჩაწერეთ ან აირჩიეთ" maxlength="4"
+                                       max="@(currentYear + 1)" min="0"
+                                       oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4);" />
+                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('YearInput').value = ''">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <datalist id="vintageYears">
+                                @if (ViewBag.VintageYears != null)
+                                {
+                                    foreach (var item in (List<SelectListItem>)ViewBag.VintageYears)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </datalist>
+                            <span asp-validation-for="Year" class="text-danger"></span>
+                        </div>
+
+                        @* --- ღილაკები --- *@ 
+                        <div class="col-12 text-center pt-3 border-top">
+                            <div class="d-flex justify-content-center flex-wrap gap-3">
+
+                                @* 1. SAVE *@
+                                <button type="submit" class="btn btn-primary btn-lg px-4">
+                                    <i class="bi bi-save-fill me-2"></i> 💾 შენახვა
+                                </button>
+
+                                @* 2. ARCHIVE / REACTIVATE *@
+                                @if (Model.IsActive)
+                                {
+                                    <a asp-action="Status" asp-route-id="@Model.BarrelID" class="btn btn-warning btn-lg px-4">
+                                        <i class="bi bi-archive-fill me-2"></i> არქივირება
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-action="Status" asp-route-id="@Model.BarrelID" class="btn btn-success btn-lg px-4">
+                                        <i class="bi bi-arrow-repeat me-2"></i> რეაქტივაცია
+                                    </a>
+                                }
+
+                                @* 3. DELETE *@
+                                <a asp-action="Delete" asp-route-id="@Model.BarrelID" class="btn btn-danger btn-lg px-4">
+                                    <i class="bi bi-trash-fill me-2"></i> წაშლა
+                                </a>
+
+                                @* 4. BACK *@
+                                <a asp-action="Index" asp-route-companyId="@Model.CompanyID" class="btn btn-secondary btn-lg px-4">
+                                    <i class="bi bi-arrow-left-circle-fill me-2"></i> 🔙 დაბრუნება
+                                </a>
+
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Modal Code and Scripts - იგივე რაც Create-ში *@
+<div class="modal fade" id="beverageSelectionModal" tabindex="-1" aria-labelledby="beverageSelectionModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light text-dark">
+                <h5 class="modal-title"><i class="bi bi-search me-2"></i> სასმელის არჩევა</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                @* ძიების ფორმა (იგივე რაც Create-ში) *@
+                <div class="row mb-3">
+                    <div class="col-md-5 mb-2"><input type="text" id="searchName" class="form-control" placeholder="სასმელის სახელი" /></div>
+                    <div class="col-md-5 mb-2"><input type="text" id="searchProperties" class="form-control" placeholder="ტიპი, კატეგორია..." /></div>
+                    <div class="col-md-2 mb-2"><select id="searchLogic" class="form-select"><option value="AND">AND</option><option value="OR">OR</option></select></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover" id="beverageTable">
+                        <thead class="table-primary"><tr><th>ID</th><th>სახელი</th><th>ტიპი</th><th>კატეგორია</th><th>ფერი</th><th>შაქრიანობა</th></tr></thead>
+                        <tbody>
+                            @if (ViewBag.Beverages != null)
+                            {
+                                foreach (var bev in (List<InventoryManagementWebApp.Models.Beverage>)ViewBag.Beverages)
+                                {
+                                    <tr class="beverage-row" data-id="@bev.BeverageID" data-name="@bev.Name" data-type="@(bev.ProductType?.Name)" data-category="@(bev.Category?.Name)" data-color="@(bev.Color?.Name)" data-sweetness="@(bev.Sweetness?.Name)" style="cursor: pointer;">
+                                        <td>@bev.BeverageID</td>
+                                        <td>@bev.Name</td>
+                                        <td>@(bev.ProductType?.Name)</td>
+                                        <td>@(bev.Category?.Name)</td>
+                                        <td>@(bev.Color?.Name)</td>
+                                        <td>@(bev.Sweetness?.Name)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .modal-backdrop {
+        z-index: 1040 !important;
+    }
+
+    .modal {
+        z-index: 1050 !important;
+    }
+</style>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function () {
+            var modal = new bootstrap.Modal(document.getElementById('beverageSelectionModal'));
+            $("#toggleBeverageSelection").click(function () { modal.show(); });
+            // ფილტრაციის ფუნქცია იგივე რაც Create-ში...
+             function filterBeverages() {
+                var nameFilter = $('#searchName').val().toLowerCase();
+                var propFilter = $('#searchProperties').val().toLowerCase();
+                var logic = $('#searchLogic').val();
+                $('#beverageTable tbody tr').each(function () {
+                    var row = $(this);
+                    var name = row.data('name').toLowerCase();
+                    var type = (row.data('type')||"").toLowerCase();
+                    var category = (row.data('category')||"").toLowerCase();
+                    var color = (row.data('color')||"").toLowerCase();
+                    var sweetness = (row.data('sweetness')||"").toLowerCase();
+                    var nameMatch = name.includes(nameFilter);
+                    var propMatch = type.includes(propFilter) || category.includes(propFilter) || color.includes(propFilter) || sweetness.includes(propFilter);
+                    if (((nameFilter === "" && propFilter === "") || ((logic === "AND") ? (nameMatch && propMatch) : (nameMatch || propMatch)))) row.show(); else row.hide();
+                });
+            }
+            $('#searchName, #searchProperties, #searchLogic').on('input change', filterBeverages);
+            $('#beverageTable').on('click', '.beverage-row', function () {
+                var row = $(this);
+                $('#SelectedBeverageID').val(row.data('id'));
+                var html = "<tr><td>" + row.data('name') + "</td><td>" + row.data('type') + "</td><td>" + row.data('category') + "</td><td>" + row.data('color') + "</td><td>" + row.data('sweetness') + "</td></tr>";
+                $("#selectedBeverageTable tbody").html(html);
+                modal.hide();
+            });
+        });
+    </script>
+}
