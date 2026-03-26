@@ -15,11 +15,11 @@ namespace InventoryManagementWebApp.Models
         [Range(0.01, double.MaxValue)]
         public decimal Quantity { get; set; }
 
-        [Required]
         [MaxLength(50)]
+        [Required(ErrorMessage = "გთხოვთ, მიუთითოთ საბუთის ნომერი")]
         public string DocumentNumber { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "გთხოვთ, აირჩიოთ საბუთის ტიპი")]
         public int DocumentTypeID { get; set; }
 
         public int? ExecutedByUserID { get; set; }

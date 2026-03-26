@@ -158,8 +158,8 @@ public class AccountController : Controller
         int mask = 0;
         if (model.CanAccessWine) mask |= 1;
         if (model.CanAccessSparkling) mask |= 2;
-        if (model.CanAccessSpirit) mask |= 4;
         if (model.CanAccessWineBased) mask |= 8;
+        if (model.CanAccessSpirit) mask |= 4;
 
         var (passwordHash, passwordSalt) = CreatePasswordHash(model.Password);
 

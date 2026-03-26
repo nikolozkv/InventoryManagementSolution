@@ -299,6 +299,7 @@ C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementW
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\InventoryManagementWebApp.MvcApplicationPartsAssemblyInfo.cache
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\InventoryManagementWebApp.RazorAssemblyInfo.cache
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\InventoryManagementWebApp.RazorAssemblyInfo.cs
+C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\InventoryManagementWebApp.sourcelink.json
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\rjimswa.dswa.cache.json
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\rjsmrazor.dswa.cache.json
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\rjsmcshtml.dswa.cache.json

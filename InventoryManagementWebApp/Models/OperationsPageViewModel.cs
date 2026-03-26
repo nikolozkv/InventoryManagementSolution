@@ -37,5 +37,8 @@ namespace InventoryManagementWebApp.Models
         // არსებულ ველებთან ერთად ჩასვით ეს:
         public CreateWineOperationViewModel NewOperation { get; set; } = new();
 
+        public int DocumentTypeID { get; set; }
+        public string? DocumentNumber { get; set; }
+
     }
 }

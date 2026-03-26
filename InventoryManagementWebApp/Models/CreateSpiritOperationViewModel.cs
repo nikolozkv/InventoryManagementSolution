@@ -17,11 +17,11 @@ namespace InventoryManagementWebApp.Models
         [Required(ErrorMessage = "მიუთითეთ თარიღი")]
         public DateTime TransactionDate { get; set; } = DateTime.Now.Date;
 
-        [Required]
+        [Required(ErrorMessage = "გთხოვთ, აირჩიოთ საბუთის ტიპი")]
         public int DocumentTypeID { get; set; }
 
-        [Required]
-        public string? DocumentNumber { get; set; }
+        [Required(ErrorMessage = "გთხოვთ, მიუთითოთ საბუთის ნომერი")]
+        public string DocumentNumber { get; set; }
         public int? ExecutedByUserID { get; set; }
         public int? OppositeBarrelID { get; set; }
 

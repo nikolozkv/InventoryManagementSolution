@@ -197,7 +197,7 @@ namespace InventoryManagementWebApp.Controllers
         {
             if (model.HarvestYear > DateTime.Now.Year)
             {
-                TempData["Message"] = "დაყენებული ღვინის მოსავლის წელი არ შეიძლება იყოს მომავალში.";
+                TempData["Message"] = "შერჩეული ღვინის მოსავლის წელი არ შეიძლება იყოს მომავალში.";
                 TempData["Status"] = "danger";
                 // Preserve form data
                 TempData["FormData"] = System.Text.Json.JsonSerializer.Serialize(model);
