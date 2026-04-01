@@ -88,35 +88,18 @@ InventoryManagementSolution/
 - [Microsoft SQL Server](https://www.microsoft.com/sql-server) (LocalDB ან სრული ვერსია)
 - [Visual Studio 2022](https://visualstudio.microsoft.com/) (ან VS Code)
 
-### ინსტალაცია
-
-```bash
-# 1. რეპოზიტორის კლონირება
-git clone https://github.com/nikolozkv/InventoryManagementSolution.git
-
-# 2. პროექტის გახსნა
-cd InventoryManagementSolution
-
-# 3. კავშირის სტრინგის კონფიგურაცია
-# გახსენით appsettings.json და შეავსეთ ConnectionStrings სექცია
-
-# 4. მიგრაციების გაშვება
-dotnet ef database update
-
-# 5. პროექტის გაშვება
-dotnet run --project InventoryManagementWebApp
-```
-
 ---
 
 ## 👤 ავტორი
 
 <div align="center">
 
-**ნიკოლოზ კვარაცხელია**
-პროგრამული უზრუნველყოფის შემქმნელი
+**ნიკოლოზ კვალიაშვილი**
+და
+**ალექსანდრე კვალიაშვილი**
 
 [![GitHub](https://img.shields.io/badge/GitHub-nikolozkv-181717?style=for-the-badge&logo=github)](https://github.com/nikolozkv)
+[![GitHub](https://img.shields.io/badge/GitHub-sandrokvali-181717?style=for-the-badge&logo=github)](https://github.com/sandrokvali)
 
 </div>
 
@@ -125,7 +108,7 @@ dotnet run --project InventoryManagementWebApp
 ## ⚖️ საავტორო უფლებები და ლიცენზია
 
 ```
-Copyright © 2026 ნიკოლოზ კვარაცხელია. ყველა უფლება დაცულია.
+Copyright © 2026 ნიკოლოზ კვალიაშვილი. ყველა უფლება დაცულია.
 
 All Rights Reserved.
 
@@ -143,6 +126,5 @@ express written permission of the author.
 
 <div align="center">
 
-*შექმნილია ❤️-ით · 2026 · თბილისი, საქართველო*
 
 </div>
