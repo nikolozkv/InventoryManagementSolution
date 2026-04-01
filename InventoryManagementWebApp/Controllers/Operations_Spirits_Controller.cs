@@ -37,14 +37,19 @@ namespace InventoryManagementWebApp.Controllers
             if (barrel == null)
                 return NotFound("სპირტის კასრი ვერ მოიძებნა.");
 
-            // ვიღებთ მხოლოდ იმ ოპერაციებს, რომლებსაც სპირტთან აქვთ წვდომა (Bit 4)
+            // ✅ რადგან სპირტის კონტროლერში ვართ, BitMask ყოველთვის არის 4
+            int productBitValue = 4;
+
+            // 1. DropDown-ისთვის განკუთვნილი სია
             ViewBag.OperationDefinitions = await _context.OperationDefinitions
-                .Where(o => o.IsActive == true && (o.TypeCodeMask & 4) > 0)
+                .Where(o => o.IsActive == true && (o.TypeCodeMask & productBitValue) > 0)
+                .OrderBy(o => o.Position)
                 .Select(o => new SelectListItem { Text = o.Name, Value = o.OperationDefID.ToString() })
                 .ToListAsync();
 
+            // 2. JavaScript-ისთვის განკუთვნილი სრული ობიექტი
             ViewBag.OperationDefinitionsFull = await _context.OperationDefinitions
-                .Where(o => o.IsActive == true && (o.TypeCodeMask & 4) > 0)
+                .Where(o => o.IsActive == true && (o.TypeCodeMask & productBitValue) > 0)
                 .Select(o => new { o.OperationDefID, o.Name, o.OperType, o.PreserveBarrelState })
                 .ToListAsync();
 
@@ -54,17 +59,17 @@ namespace InventoryManagementWebApp.Controllers
                 .ToListAsync();
 
             var operations = await _context.Operations
-                .Where(o => o.BarrelID == barrelId)
-                .Include(o => o.OperationDefinition)
-                .Include(o => o.DocumentType)
-                .Include(o => o.Beverage).ThenInclude(b => b.ProductType)
-                .Include(o => o.Beverage).ThenInclude(b => b.Category)
-                .Include(o => o.Beverage).ThenInclude(b => b.Color)
-                .Include(o => o.Beverage).ThenInclude(b => b.Sweetness)
-                .OrderByDescending(o => o.TransactionDate)
-                .ThenBy(o => o.Math == "-" ? 0 : 1)
-                .ThenByDescending(o => o.OperationID)
-                .ToListAsync();
+                    .Where(o => o.BarrelID == barrelId)
+                    .Include(o => o.OperationDefinition)
+                    .Include(o => o.DocumentType)
+                    .Include(o => o.Beverage).ThenInclude(b => b.ProductType)
+                    .Include(o => o.Beverage).ThenInclude(b => b.Category)
+                    .Include(o => o.Beverage).ThenInclude(b => b.Color)
+                    .Include(o => o.Beverage).ThenInclude(b => b.Sweetness)
+                    .OrderByDescending(o => o.TransactionDate)
+                    .ThenByDescending(o => o.CalcOrder)
+                    .ThenByDescending(o => o.OperationID)
+                    .ToListAsync();
 
             var userIds = operations.Where(o => o.ExecutedByUserID.HasValue)
                                    .Select(o => o.ExecutedByUserID.Value)
@@ -72,9 +77,9 @@ namespace InventoryManagementWebApp.Controllers
                                    .ToList();
 
             var sourceCompanyIds = operations.Where(o => o.SourceCompanyID.HasValue)
-                                           .Select(o => o.SourceCompanyID.Value)
-                                           .Distinct()
-                                           .ToList();
+                                             .Select(o => o.SourceCompanyID.Value)
+                                             .Distinct()
+                                             .ToList();
 
             var userData = new Dictionary<int, (string, string)>();
             if (userIds.Any())
@@ -111,26 +116,30 @@ namespace InventoryManagementWebApp.Controllers
                 }
             }
 
-            var viewModel = new OperationsPageViewModel
+            var viewModel = new OperationsSpiritPageViewModel
             {
                 BarrelID = barrel.BarrelID,
                 CompanyID = barrel.CompanyID,
                 CompanyName = barrel.Company.Name,
                 CompanyTypeName = barrel.Company.CompanyType?.Name,
                 CompanyLot = barrel.Company.CompanyLot,
+
+                BeverageID = barrel.BeverageID,
                 BeverageName = barrel.Beverage.Name,
-                HarvestYear = barrel.Year ?? 0,
-                CurrentVolume = barrel.CurrentVolume,
-                YearPercentage = barrel.YearPercentage ?? 0,
-                PurePercentage = barrel.PurePercentage ?? 0,
                 ProductType = barrel.Beverage.ProductType?.Name,
                 Category = barrel.Beverage.Category?.Name,
                 Color = barrel.Beverage.Color?.Name,
                 Sweetness = barrel.Beverage.Sweetness?.Name,
-                Operations = operations.Select(o => {
+
+                CurrentVolume = barrel.CurrentVolume, // ✅ დაემატა "m" 
+                WeightedAvgDate = barrel.WeightedAvgDate,
+                CurrentAlcPercent = barrel.CurrentAlcPercent,
+
+                // ✅ გასწორდა Select-ის ლოგიკა (დაემატა ბლოკი { ... return new ... })
+                Operations = operations.Select(o =>
+                {
                     string firstName = "";
                     string lastName = "";
-
                     if (o.ExecutedByUserID.HasValue && userData.ContainsKey(o.ExecutedByUserID.Value))
                     {
                         var userInfo = userData[o.ExecutedByUserID.Value];
@@ -153,28 +162,25 @@ namespace InventoryManagementWebApp.Controllers
                         DocumentTypeName = o.DocumentType?.DocumentName,
                         Quantity = (o.Math == "-" ? "-" : "+") + o.Quantity.ToString("0.##"),
                         VolumeLeft = o.VolumeLeft,
-                        HarvestYear = o.HarvestYear,
-                        YearPercentage = o.YearAPercent,
-                        PurePercentage = o.PureAPercent,
+
                         BeverageName = o.Beverage?.Name,
                         ProductType = o.Beverage?.ProductType?.Name,
                         Category = o.Beverage?.Category?.Name,
                         Color = o.Beverage?.Color?.Name,
                         Sweetness = o.Beverage?.Sweetness?.Name,
                         ExecutedByUserID = o.ExecutedByUserID,
-                        ExecutedByUserFirstName = firstName,
-                        ExecutedByUserLastName = lastName,
+                        ExecutedByUserFirstName = firstName,     // ✅ ახლა უკვე დაინახავს ცვლადს
+                        ExecutedByUserLastName = lastName,       // ✅ ახლა უკვე დაინახავს ცვლადს
                         LinkedOperationID = o.LinkedOperationID,
                         SourceCompanyID = o.SourceCompanyID,
                         SourceBarrelID = o.SourceBarrelID,
-                        SourceCompanyName = sourceCompanyName
+                        SourceCompanyName = sourceCompanyName    // ✅ ახლა უკვე დაინახავს ცვლადს
                     };
                 }).ToList()
             };
 
             return View(viewModel);
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateSpiritOperationViewModel model)
@@ -203,7 +209,6 @@ namespace InventoryManagementWebApp.Controllers
                     new SqlParameter("@BarrelID", model.BarrelID),
                     new SqlParameter("@Quantity", model.Quantity),
                     new SqlParameter("@TransactionDate", model.TransactionDate),
-                    new SqlParameter("@DistillationDate", (object?)model.DistillationDate ?? DBNull.Value),
                     new SqlParameter("@WineAlcPercent", (object?)model.WineAlcPercent ?? DBNull.Value),
                     new SqlParameter("@LossPercent", (object?)model.LossPercent ?? DBNull.Value),
                     new SqlParameter("@OppositeBarrelID", (object?)model.OppositeBarrelID ?? DBNull.Value),
@@ -216,10 +221,11 @@ namespace InventoryManagementWebApp.Controllers
 
                 // აქ ვიძახებთ სპირტის სპეციალურ პროცედურას!
                 await _context.Database.ExecuteSqlRawAsync(
-                    "EXEC dbo.Spirit_ExecuteOperation @OperationDefID, @BarrelID, @Quantity, @TransactionDate, @DistillationDate, @WineAlcPercent, @LossPercent, @OppositeBarrelID, @DocumentNumber, @DocumentTypeID, @ExecutedByUserID, @NewOperationID OUTPUT, @Message OUTPUT",
+                    "EXEC dbo.Spirit_ExecuteOperation @OperationDefID, @BarrelID, @Quantity, @TransactionDate, @WineAlcPercent, @LossPercent, @OppositeBarrelID, @DocumentNumber, @DocumentTypeID, @ExecutedByUserID, @NewOperationID OUTPUT, @Message OUTPUT",
                     parameters);
 
-                var message = parameters[12].Value?.ToString();
+                var message = parameters.First(p => p.ParameterName == "@Message").Value?.ToString();
+                var newOpIdParam = parameters.First(p => p.ParameterName == "@NewOperationID").Value;
                 TempData["Message"] = message;
                 var isSuccess = message?.Contains("წარმატ") == true;
                 TempData["Status"] = isSuccess ? "success" : "warning";
@@ -302,13 +308,16 @@ namespace InventoryManagementWebApp.Controllers
             return Json(result.Select(x => new { value = x.Value, text = x.Text }));
         }
 
-        [HttpGet("/api/spirits-operations/filtered-barrels")]
+        //1. კასრების ფილტრაციის API(სპირტის ლოგიკით)
+        //აქ ვიძახებთ ახალ Spirit_GetFilteredBarrelsForTransfer პროცედურას.
+
+        [HttpGet("/api/operations-spirits/filtered-barrels")]
         public async Task<IActionResult> GetFilteredBarrels(int barrelId, int operType, int? companyId)
         {
             var result = new List<SelectListItem>();
 
             using (var conn = _context.Database.GetDbConnection() as SqlConnection)
-            using (var cmd = new SqlCommand("GetFilteredBarrelsForTransfer", conn))
+            using (var cmd = new SqlCommand("Spirit_GetFilteredBarrelsForTransfer", conn)) // ✅ ახალი პროცედურა
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@BarrelID", barrelId);
@@ -323,7 +332,8 @@ namespace InventoryManagementWebApp.Controllers
                         result.Add(new SelectListItem
                         {
                             Value = reader["BarrelID"].ToString(),
-                            Text = $"{reader["BeverageName"]} ({reader["Year"]} წ.) - {reader["CurrentVolume"]} ლ"
+                            // ✅ ტექსტში შეგვიძლია წელი ამოვიღოთ, ან დავტოვოთ თუ გინდა ჩანდეს
+                            Text = $"{reader["BeverageName"]} - {reader["CurrentVolume"]} ლ"
                         });
                     }
                 }
@@ -332,13 +342,19 @@ namespace InventoryManagementWebApp.Controllers
             return Json(result.Select(x => new { value = x.Value, text = x.Text }));
         }
 
-        [HttpGet("/api/spirits-operations/get-data-by-transdate")]
+        //2. თარიღით მონაცემების წამოღების API(ჭკვიანი ნაშთით)
+        //  აქ ვიძახებთ Spirit_Get_Data_By_TransDate - ს,
+        //  რომელიც გვიბრუნებს MaxAllowed(მომავლის ლიმიტი)
+        //  და WeightedAvgDate(ასაკი) ველებს.
+
+        [HttpGet("/api/operations-spirits/get-data-by-transdate")]
         public async Task<IActionResult> GetDataByTransDate(int operType, int barrelId, int? oppositeBarrelId, DateTime transactionDate)
         {
-            int workBarrelId = operType == 1 || operType == 5 ? barrelId : oppositeBarrelId ?? 0;
+            int workBarrelId = operType == 1 ? barrelId : oppositeBarrelId ?? 0;
             if (workBarrelId == 0)
-                return Json(new { volume = 0 });
+                return Json(new { volume = 0, maxAllowed = 0 });
 
+            // ცვლადები სპირტისთვის
             int beverageId = 0;
             string beverageName = "";
             string productType = "";
@@ -346,19 +362,21 @@ namespace InventoryManagementWebApp.Controllers
             string color = "";
             string sweetness = "";
             decimal volume = 0;
-            decimal yearPercent = 0;
+            decimal maxAllowed = 0; // ✅ ახალი: რეალური დასაშვები ნაშთი
+            string harvestYear = ""; // ✅ შეიძლება იყოს სპირტის ასაკი ან ღვინის წელი
+            string weightedAvgDate = "";
             decimal purePercent = 0;
 
-            decimal yearLimit = 0;
-            decimal pureLimit = 0;
-            bool allowMix = false;
+            decimal yearLimit = -1;
+            decimal pureLimit = -1;
+            bool allowMix = true;
 
             using (var conn = _context.Database.GetDbConnection() as SqlConnection)
-            using (var cmd = new SqlCommand("Get_Data_By_TransDate", conn))
+            using (var cmd = new SqlCommand("Spirit_Get_Data_By_TransDate", conn)) // ✅ ახალი პროცედურა
             {
                 cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@BarrelID", barrelId);
-                cmd.Parameters.AddWithValue("@WorkBarrelID", workBarrelId);
+                cmd.Parameters.AddWithValue("@TargetBarrelID", barrelId);
+                cmd.Parameters.AddWithValue("@SourceBarrelID", workBarrelId);
                 cmd.Parameters.AddWithValue("@OperType", operType);
                 cmd.Parameters.AddWithValue("@TransactionDate", transactionDate);
 
@@ -368,23 +386,20 @@ namespace InventoryManagementWebApp.Controllers
                     if (await reader.ReadAsync())
                     {
                         beverageId = Convert.ToInt32(reader["BeverageID"]);
-                        beverageName = reader["BeverageName"]?.ToString();
-                        productType = reader["ProductType"]?.ToString();
-                        category = reader["Category"]?.ToString();
-                        color = reader["Color"]?.ToString();
-                        sweetness = reader["Sweetness"]?.ToString();
-                        volume = Convert.ToDecimal(reader["VolumeLeft"]);
-                        yearPercent = Convert.ToDecimal(reader["YearPercentage"]);
-                        purePercent = Convert.ToDecimal(reader["PurePercentage"]);
-                    }
-                    if (await reader.NextResultAsync())
-                    {
-                        if (await reader.ReadAsync())
-                        {
-                            yearLimit = reader["YearLimit"] != DBNull.Value ? Convert.ToDecimal(reader["YearLimit"]) : 0;
-                            pureLimit = reader["PureLimit"] != DBNull.Value ? Convert.ToDecimal(reader["PureLimit"]) : 0;
-                            allowMix = reader["AllowMix"] != DBNull.Value && Convert.ToBoolean(reader["AllowMix"]);
-                        }
+                        beverageName = reader["BeverageName"]?.ToString() ?? "";
+                        productType = reader["ProductType"]?.ToString() ?? "";
+                        category = reader["Category"]?.ToString() ?? "";
+                        color = reader["Color"]?.ToString() ?? "";
+                        sweetness = reader["Sweetness"]?.ToString() ?? "";
+                        volume = Convert.ToDecimal(reader["Volume"]);
+                        maxAllowed = Convert.ToDecimal(reader["MaxAllowed"]); // ✅ ვკითხულობთ ლიმიტს
+
+                        harvestYear = reader["HarvestYear"]?.ToString() ?? "";
+                        weightedAvgDate = reader["WeightedAvgDate"] != DBNull.Value ? Convert.ToDateTime(reader["WeightedAvgDate"]).ToString("yyyy-MM-dd") : "";
+                        purePercent = Convert.ToDecimal(reader["PurePercent"]);
+                        yearLimit = Convert.ToDecimal(reader["YearLimit"]);
+                        pureLimit = Convert.ToDecimal(reader["PureLimit"]);
+                        allowMix = Convert.ToBoolean(reader["AllowMix"]);
                     }
                 }
             }
@@ -398,7 +413,9 @@ namespace InventoryManagementWebApp.Controllers
                 color,
                 sweetness,
                 volume,
-                yearPercent,
+                maxAllowed, // ✅ ვაწვდით ფრონტ-ენდს
+                harvestYear,
+                weightedAvgDate,
                 purePercent,
                 yearLimit,
                 pureLimit,

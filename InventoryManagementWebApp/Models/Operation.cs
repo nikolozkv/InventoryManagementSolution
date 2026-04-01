@@ -64,6 +64,9 @@ namespace InventoryManagementWebApp.Models
         [Column(TypeName = "decimal(7,2)")]
         public decimal? YearAPercent { get; set; }
 
+        // ოპერაციების თანმიმდევრობის განსაზღვრისთვის (მაგ. ჯერ შემოსავალი, მერე გასავალი)
+        public int CalcOrder { get; set; }
+
         [ForeignKey("OperationDefID")]
         public virtual OperationDefinition OperationDefinition { get; set; } = null!;
 

@@ -1075,6 +1075,64 @@
         // Clipboard data is loaded; document types and current data will be populated after DOM ready via schedulePopulateF1
         loadClipboardFromStorage();
     </script>
+
+    @* მიმდინარე ვერსიის ნომერი *@
     <div class="app-version">V 26.02.15</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // ვკითხულობთ TempData-ს (თუ რამე შეტყობინება გვაქვს)
+            const sysMsg = '@Html.Raw(TempData["Message"]?.ToString()?.Replace("'", "\\'").Replace("\n", "\\n") ?? "")';
+            const sysStatus = '@(TempData["Status"]?.ToString() ?? "")';
+            const delMsg = '@Html.Raw(TempData["DeleteMessage"]?.ToString()?.Replace("'", "\\'").Replace("\n", "\\n") ?? "")';
+            const delStatus = '@(TempData["DeleteStatus"]?.ToString() ?? "")';
+
+            const finalMsg = sysMsg || delMsg;
+            const finalStatus = sysStatus || delStatus;
+
+            // 1. თუ გვაქვს მესიჯი, გამოვიტანოთ ეკრანზე
+            if (finalMsg) {
+                let iconType = 'info';
+                let titleText = 'შეტყობინება';
+
+                if (finalStatus === 'success') { iconType = 'success'; titleText = 'წარმატება!'; }
+                else if (finalStatus === 'warning') { iconType = 'warning'; titleText = 'გაფრთხილება'; }
+                else if (finalStatus === 'error') { iconType = 'error'; titleText = 'შეცდომა'; }
+
+                Swal.fire({
+                    icon: iconType,
+                    title: titleText,
+                    text: finalMsg,
+                    confirmButtonText: 'OK'
+                });
+            }
+
+            // 2. წაშლის ღილაკების გლობალური დამჭერი (მთელ საიტზე იმუშავებს)
+            document.querySelectorAll('form.delete-form').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    if (!this.dataset.confirmed) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'დარწმუნებული ხართ?',
+                            text: "გსურთ ოპერაციის წაშლა? ეს მოქმედება შეუქცევადია!",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#dc3545',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'დიახ, წაშალე!',
+                            cancelButtonText: 'გაუქმება'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                this.dataset.confirmed = true;
+                                this.submit();
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
 </body>
 </html>

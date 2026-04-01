@@ -53,10 +53,14 @@ namespace InventoryManagementWebApp.Models
 
 
         // სპირტისთვის საჭირო ახალი ველები:
-        //public decimal? CurrentPureVolume { get; set; } // AA ლიტრების მიმდინარე ჯამი
+
+        // ალკოჰოლის მიმდინარე პროცენტი (სპირტისთვის)
+        public decimal? CurrentAlcPercent { get; set; } // AA ლიტრების მიმდინარე ჯამი
+
+        // საშუალო შეწონილი თარიღი (სპირტის ასაკის გამოსათვლელად)
         public DateTime? WeightedAvgDate { get; set; }  // საშუალო თარიღი (ასაკისთვის)
 
-        // ბიტური ნიღაბი (რომელიც უკვე გვაქვს ბაზაში)
+        // სასმელის ტიპის ბიტური ნიღაბი (BitMask ლოგიკისთვის)
         public int ProductTypeBitValue { get; set; }
     }
 }

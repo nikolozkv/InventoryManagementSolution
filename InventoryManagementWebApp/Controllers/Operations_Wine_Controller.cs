@@ -39,13 +39,21 @@ namespace InventoryManagementWebApp.Controllers
             if (barrel == null)
                 return NotFound("კასრი ვერ მოიძებნა.");
 
+            // ვიღებთ სასმელის BitValue-ს (სპირტისთვის იქნება 4)
+            // თუ რატომღაც ცარიელია, 0-ით დავაზღვევთ რომ ერორი არ ამოაგდოს
+            // int productBitValue = 11; // ტესტისთვის, რომ დარწმუნდე ფილტრი მუშაობს. რეალურად უნდა იყოს სასმელის BitValue 
+            int productBitValue = barrel.ProductTypeBitValue is int pbv ? pbv : 0;
+
+            // 1. DropDown-ისთვის განკუთვნილი სია
             ViewBag.OperationDefinitions = await _context.OperationDefinitions
-                .Where(o => o.IsActive == true)
+                .Where(o => o.IsActive == true && (o.TypeCodeMask & productBitValue) > 0) // ✅ Bitwise ფილტრი
+                .OrderBy(o => o.Position) // ✅ რადგან Position დაამატე, აუცილებლად დავასორტიროთ!
                 .Select(o => new SelectListItem { Text = o.Name, Value = o.OperationDefID.ToString() })
                 .ToListAsync();
 
+            // 2. JavaScript-ისთვის განკუთვნილი სრული ობიექტი
             ViewBag.OperationDefinitionsFull = await _context.OperationDefinitions
-                .Where(o => o.IsActive == true)
+                .Where(o => o.IsActive == true && (o.TypeCodeMask & productBitValue) > 0) // ✅ იგივე ფილტრი
                 .Select(o => new { o.OperationDefID, o.Name, o.OperType, o.PreserveBarrelState })
                 .ToListAsync();
 

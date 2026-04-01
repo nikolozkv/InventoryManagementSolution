@@ -1,17 +1,32 @@
-@model InventoryManagementWebApp.Models.OperationsPageViewModel
+@model InventoryManagementWebApp.Models.OperationsSpiritPageViewModel
 
 @{
-    ViewData["Title"] = "კასრზე ჩატარებული ოპერაციები";
+    ViewData["Title"] = "სპირტის ოპერაციები";
+
+    // ლოკალური ფუნქცია ასაკის გამოსათვლელად
+    string GetAgeString(DateTime? date)
+    {
+        if (!date.HasValue) return "უცნობი";
+        var now = DateTime.Now;
+        var years = now.Year - date.Value.Year;
+        var months = now.Month - date.Value.Month;
+        if (now.Day < date.Value.Day) months--;
+        if (months < 0) { years--; months += 12; }
+
+        if (years == 0 && months == 0) return "ახალი გამოხდილი";
+        string res = "";
+        if (years > 0) res += $"{years} წ. ";
+        if (months > 0) res += $"{months} თვ.";
+        return res.Trim();
+    }
 }
 
 <div class="container-fluid py-4">
-    <h2 class="mb-4 text-center">კასრზე ჩატარებული ოპერაციები</h2>
+    <h2 class="mb-4 text-center">სპირტის კასრზე ჩატარებული ოპერაციები</h2>
     <hr class="mb-5" />
 
     <div class="row gx-4">
-        <!-- Left Column: Information Display Sections -->
         <div class="col-lg-4 col-md-6 mb-4">
-            <!-- I. Header/Title Section -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="bi bi-info-circle-fill me-2"></i> კასრის დეტალები</h5>
@@ -22,52 +37,29 @@
                 </div>
             </div>
 
-            <!-- II. Information Display Section -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light">
                     <h6 class="mb-0">მიმდინარე სტატუსი</h6>
                 </div>
                 <div class="card-body">
-                    <h5 class="card-subtitle mb-2 text-muted">კასრი: @Model.BeverageName (@(Model.HarvestYear > 0 ? Model.HarvestYear.ToString() : "უწლოვანო"))</h5>
-                    <p class="card-text mb-2">
-                        <i class="bi bi-droplet-fill me-2 text-secondary"></i> <strong>ნაშთი:</strong> @Model.CurrentVolume ლ
+                    <h5 class="card-subtitle mb-3 text-muted">კასრი: @Model.BeverageName</h5>
+                    
+                    <p class="card-text mb-2 fs-5">
+                        <i class="bi bi-droplet-fill me-2 text-primary"></i> <strong>ნაშთი:</strong> @Model.CurrentVolume.ToString("0.##") ლ
                     </p>
 
-                    @* 1. წლის პროცენტის ლოგიკა: აქვს წელი (HarvestYear > 0) და პროცენტი < 85 *@
-                    <p class="card-text mb-2 d-flex align-items-center">
-                        <i class="bi bi-calendar-fill me-2 text-secondary"></i> <strong class="me-2">წლის %:</strong>
-                        @if (Model.HarvestYear > 0 && Model.YearPercentage < 85 && @Model.CurrentVolume>0)
-                        {
-                            <span class="text-danger fw-bold bg-danger bg-opacity-10 px-2 py-1 rounded d-inline-flex align-items-center border border-danger border-opacity-25">
-                                @Model.YearPercentage%
-                                <i class="bi bi-exclamation-triangle-fill ms-2 fs-5 text-danger" title="ყურადღება! წლის პროცენტი 85%-ზე დაბალია"></i>
-                            </span>
-                        }
-                        else
-                        {
-                            <span>@Model.YearPercentage%</span>
-                        }
+                    <p class="card-text mb-2 fs-5">
+                        <i class="bi bi-hourglass-split me-2 text-warning"></i> <strong>ასაკი:</strong> 
+                        <span class="badge bg-warning text-dark">@GetAgeString(Model.WeightedAvgDate)</span>
                     </p>
 
-                    @* 2. სუფთა პროცენტის ლოგიკა: არ არის კუპაჟი და პროცენტი < 85 *@
-                    <p class="card-text mb-1 d-flex align-items-center">
-                        <i class="bi bi-patch-check-fill me-2 text-secondary"></i> <strong class="me-2">სუფთა %:</strong>
-                        @if (Model.SubCategory != "კუპაჟი" && Model.PurePercentage < 85 && @Model.CurrentVolume > 0)
-                        {
-                            <span class="text-danger fw-bold bg-danger bg-opacity-10 px-2 py-1 rounded d-inline-flex align-items-center border border-danger border-opacity-25">
-                                @Model.PurePercentage%
-                                <i class="bi bi-exclamation-triangle-fill ms-2 fs-5 text-danger" title="ყურადღება! ჯიშური სასმელის სისუფთავე 85%-ზე დაბალია"></i>
-                            </span>
-                        }
-                        else
-                        {
-                            <span>@Model.PurePercentage%</span>
-                        }
+                    <p class="card-text mb-1 fs-5">
+                        <i class="bi bi-percent me-2 text-danger"></i> <strong>ალკოჰოლი:</strong> 
+                        @(Model.CurrentAlcPercent.HasValue ? Model.CurrentAlcPercent.Value.ToString("0.##") + "%" : "მიუთითებელია")
                     </p>
                 </div>
             </div>
 
-            <!-- III. Characteristics/Attributes Section -->
             <div class="card shadow-sm h-md-100-flex">
                 <div class="card-header bg-light">
                     <h6 class="mb-0">მახასიათებლები</h6>
@@ -75,15 +67,13 @@
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
                         <li><i class="bi bi-tag-fill me-2 text-info"></i> <strong>სასმელი:</strong> @Model.ProductType</li>
-                        <li><i class="bi bi-bookmark-fill me-2 text-info"></i> <strong>კატეგორია:</strong> @Model.Category</li>
+                        <li><i class="bi bi-list-nested me-2 text-info"></i> <strong>კატეგორია:</strong> @Model.Category</li>
                         <li><i class="bi bi-palette-fill me-2 text-info"></i> <strong>ფერი:</strong> @Model.Color</li>
-                        <li><i class="bi bi-cup-fill me-2 text-info"></i> <strong>შაქრიანობა:</strong> @Model.Sweetness</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: IV. Input Form Section (Main Part - Two Columns) -->
         <div class="col-lg-8 col-md-6 mb-4">
             <div class="card h-100 shadow-sm d-flex flex-column">
                 <div class="card-header bg-success text-white">
@@ -95,7 +85,6 @@
                         <input type="hidden" name="BarrelID" value="@Model.BarrelID" />
                         <input type="hidden" name="BeverageID" value="@Model.BeverageID" />
                         <input type="hidden" name="OperType" id="OperType" />
-                        <input type="hidden" name="PreserveBarrelState" id="PreserveBarrelState" />
                         <input type="hidden" id="OperationID" name="OperationID" value="0" />
 
                         <script>
@@ -103,7 +92,6 @@
                         </script>
 
                         <div class="row g-2">
-                            <!-- Left Column Fields of the Form -->
                             <div class="col-lg-6 col-md-12">
                                 <div class="d-flex align-items-center mb-2">
                                     <label for="OperationDefID" class="form-label compact-label"><i class="bi bi-hand-index-thumb me-2"></i> ოპერაცია</label>
@@ -115,21 +103,10 @@
                                         }
                                     </select>
                                 </div>
-                                <div id="operationInfo" class="alert alert-info py-1 mb-2" style="display:none; font-size: 0.85rem;"></div>
 
                                 <div class="d-flex align-items-center mb-2">
                                     <label for="TransactionDate" class="form-label compact-label"><i class="bi bi-calendar-date-fill me-2"></i> თარიღი</label>
                                     <input type="date" name="TransactionDate" id="TransactionDate" class="form-control form-control-sm flex-grow-1" max="@DateTime.Now.ToString("yyyy-MM-dd")" required />
-                                </div>
-
-                                <div class="d-flex align-items-center mb-2">
-                                    <label for="UnitVolume" class="form-label compact-label"><i class="bi bi-droplet-half me-2"></i> მოცულობა (ლ)</label>
-                                    <input type="number" step="0.01" id="UnitVolume" class="form-control form-control-sm flex-grow-1" placeholder="მაგ. 0.75" />
-                                </div>
-
-                                <div class="d-flex align-items-center mb-2">
-                                    <label for="BottleCount" class="form-label compact-label"><i class="bi bi-boxes me-2"></i> ცალი</label>
-                                    <input type="number" id="BottleCount" class="form-control form-control-sm flex-grow-1" placeholder="მაგ. 6" />
                                 </div>
 
                                 <div class="d-flex align-items-center mb-2">
@@ -139,165 +116,72 @@
 
                                 <div class="d-flex align-items-center mb-2">
                                     <label for="DocumentTypeID" class="form-label compact-label"><i class="bi bi-file-earmark-text-fill me-2"></i> საბუთის ტიპი</label>
-                                    <div class="flex-grow-1">
-                                        <select name="DocumentTypeID" id="DocumentTypeID" class="form-select form-select-sm" required>
-                                            <option value="">აირჩიეთ</option>
-                                            @foreach (var item in (IEnumerable<SelectListItem>)ViewBag.DocumentTypes)
-                                            {
-                                                <option value="@item.Value">@item.Text</option>
-                                            }
-                                        </select>
-                                        <span asp-validation-for="DocumentTypeID" class="text-danger small"></span>
-                                    </div>
+                                    <select name="DocumentTypeID" id="DocumentTypeID" class="form-select form-select-sm flex-grow-1" required>
+                                        <option value="">აირჩიეთ</option>
+                                        @foreach (var item in (IEnumerable<SelectListItem>)ViewBag.DocumentTypes)
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    </select>
                                 </div>
 
                                 <div class="d-flex align-items-center mb-2">
                                     <label for="DocumentNumber" class="form-label compact-label"><i class="bi bi-hash me-2"></i> საბუთის №</label>
-                                    <div class="flex-grow-1">
-                                        <input type="text" name="DocumentNumber" id="DocumentNumber" class="form-control form-control-sm" required />
-                                        <span asp-validation-for="DocumentNumber" class="text-danger small"></span>
-                                    </div>
-                                </div>
-
-                                <div id="harvestPurityFields">
-                                    @* This wrapper will be toggled by JS based on PreserveBarrelState *@
-                                    <div class="d-flex align-items-center mb-2">
-                                        <label for="HarvestYear" class="form-label compact-label">
-                                            <i class="bi bi-calendar-check-fill me-2"></i> მოსავლის წელი
-                                        </label>
-                                        <input type="number"
-                                               name="HarvestYear"
-                                               id="HarvestYear"
-                                               class="form-control form-control-sm flex-grow-1"
-                                               list="vintageYears"
-                                               placeholder="შეიყვანეთ ან აირჩიეთ"
-                                               maxlength="4"
-                                               max="@DateTime.Now.Year"
-                                               min="1900"
-                                               value="@(Model.HarvestYear > 0 ? Model.HarvestYear.ToString() : "")"
-                                               oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4);" />
-
-                                        <datalist id="vintageYears">
-                                            @if (ViewBag.VintageYears != null)
-                                            {
-                                                @foreach (var y in (List<int>)ViewBag.VintageYears)
-                                                {
-                                                    <option value="@y"></option>
-                                                }
-                                            }
-                                        </datalist>
-                                    </div>
-
-                                    <div class="d-flex align-items-center mb-2">
-                                        <label for="YearAPercentInput" class="form-label compact-label"><i class="bi bi-percent me-2"></i> წლის %</label>
-                                        <select name="YearAPercent" id="YearAPercentInput" class="form-select form-select-sm flex-grow-1">
-                                            <option value="">აირჩიე %</option>
-                                            @foreach (var item in (IEnumerable<SelectListItem>)ViewBag.PercentList)
-                                            {
-                                                <option value="@item.Value">@item.Text</option>
-                                            }
-                                        </select>
-                                    </div>
-
-                                    <div class="d-flex align-items-center mb-2">
-                                        <label for="PureAPercentInput" class="form-label compact-label"><i class="bi bi-percent me-2"></i> სუფთა %</label>
-                                        <select name="PureAPercent" id="PureAPercentInput" class="form-select form-select-sm flex-grow-1">
-                                            <option value="">აირჩიე %</option>
-                                            @foreach (var item in (IEnumerable<SelectListItem>)ViewBag.PercentList)
-                                            {
-                                                <option value="@item.Value">@item.Text</option>
-                                            }
-                                        </select>
-                                    </div>
+                                    <input type="text" name="DocumentNumber" id="DocumentNumber" class="form-control form-control-sm flex-grow-1" required />
                                 </div>
                             </div>
 
-                            <!-- Right Column Fields of the Form -->
                             <div class="col-lg-6 col-md-12">
                                 <div id="companyBarrelFields" style="display:none;">
-                                    @* Initial state is hidden *@
-                                    <div class="d-flex align-items-center mb-2">
+                                    <div class="d-flex align-items-center mb-2" id="companySearchDiv">
                                         <label for="CompanySearch" class="form-label compact-label"><i class="bi bi-search me-2"></i> კომპანიის ძიება</label>
-                                        <input type="text" id="CompanySearch" class="form-control form-control-sm flex-grow-1" placeholder="ჩაწერე კომპანიის სახელი" disabled />
+                                        <input type="text" id="CompanySearch" class="form-control form-control-sm flex-grow-1" placeholder="ჩაწერე კომპანია" />
                                     </div>
 
-                                    <div class="d-flex align-items-center mb-2">
+                                    <div class="d-flex align-items-center mb-2" id="companySelectDiv">
                                         <label for="OppositeCompanyID" class="form-label compact-label"><i class="bi bi-building me-2"></i> კომპანია</label>
-                                        <select name="OppositeCompanyID" id="OppositeCompanyID" class="form-select form-select-sm flex-grow-1" disabled>
-                                            <option value="">აირჩიეთ კომპანია</option>
-                                        </select>
+                                        <select name="OppositeCompanyID" id="OppositeCompanyID" class="form-select form-select-sm flex-grow-1"></select>
                                     </div>
 
                                     <div class="d-flex align-items-center mb-2">
                                         <label for="BarrelSearch" class="form-label compact-label"><i class="bi bi-search me-2"></i> კასრის ძიება</label>
-                                        <input type="text" id="BarrelSearch" class="form-control form-control-sm flex-grow-1" placeholder="ჩაწერე კასრის სახელი ან წელი" disabled />
+                                        <input type="text" id="BarrelSearch" class="form-control form-control-sm flex-grow-1" placeholder="ჩაწერე კასრი" />
                                     </div>
 
                                     <div class="d-flex align-items-center mb-2">
-                                        <label for="OppositeBarrelID" class="form-label compact-label"><i class="bi bi-barrel-fill me-2"></i> კასრი</label>
-                                        <select id="OppositeBarrelID" name="OppositeBarrelID" class="form-select form-select-sm flex-grow-1" disabled></select>
-                                    </div>
-                                </div>
-
-                                <div id="beverageCharacteristicsFields">
-                                    @* This wrapper will be always visible *@
-                                    <div class="d-flex align-items-center mb-2">
-                                        <label for="bevName" class="form-label compact-label"><i class="bi bi-star-fill me-2"></i> სასმელი</label>
-                                        <input type="text" id="bevName" class="form-control form-control-sm flex-grow-1" readonly />
-                                    </div>
-
-                                    <div class="d-flex align-items-center mb-2">
-                                        <label for="bevType" class="form-label compact-label"><i class="bi bi-tags-fill me-2"></i> ტიპი</label>
-                                        <input type="text" id="bevType" class="form-control form-control-sm flex-grow-1" readonly />
-                                    </div>
-
-                                    <div class="d-flex align-items-center mb-2">
-                                        <label for="bevCategory" class="form-label compact-label"><i class="bi bi-list-nested me-2"></i> კატეგორია</label>
-                                        <input type="text" id="bevCategory" class="form-control form-control-sm flex-grow-1" readonly />
-                                    </div>
-
-                                    <div class="d-flex align-items-center mb-2">
-                                        <label for="bevColor" class="form-label compact-label"><i class="bi bi-palette-fill me-2"></i> ფერი</label>
-                                        <input type="text" id="bevColor" class="form-control form-control-sm flex-grow-1" readonly />
-                                    </div>
-
-                                    <div class="d-flex align-items-center mb-2">
-                                        <label for="bevSweetness" class="form-label compact-label"><i class="bi bi-cake-fill me-2"></i> შაქრიანობა</label>
-                                        <input type="text" id="bevSweetness" class="form-control form-control-sm flex-grow-1" readonly />
+                                        <label for="OppositeBarrelID" class="form-label compact-label"><i class="bi bi-barrel-fill me-2"></i> წყარო კასრი</label>
+                                        <select id="OppositeBarrelID" name="OppositeBarrelID" class="form-select form-select-sm flex-grow-1"></select>
                                     </div>
                                 </div>
 
-                                <div class="d-flex align-items-center mb-2">
-                                    <label for="VolumeBefore" class="form-label compact-label"><i class="bi bi-box-fill me-2"></i> მოცულობა თარიღისთვის</label>
-                                    <input type="text" id="VolumeBefore" class="form-control form-control-sm flex-grow-1" readonly />
-                                </div>
-
-                                <div class="d-flex align-items-center mb-2">
-                                    <label for="YearPercentReadOnly" class="form-label compact-label"><i class="bi bi-calendar-fill me-2"></i> წლის % (თარიღისთვის)</label>
-                                    <input type="number" id="YearPercentReadOnly" class="form-control form-control-sm flex-grow-1" readonly />
-                                </div>
-
-                                <div class="d-flex align-items-center mb-2">
-                                    <label for="PurePercentReadOnly" class="form-label compact-label"><i class="bi bi-patch-check-fill me-2"></i> სუფთა % (თარიღისთვის)</label>
-                                    <input type="number" id="PurePercentReadOnly" class="form-control form-control-sm flex-grow-1" readonly />
-                                </div>
-
-                                <!-- NEW: Wrapper for YearLimit and PureLimit fields -->
-                                <div id="limitFields" style="display:none;">
+                                <div id="distillationFields" style="display:none;" class="p-2 border border-warning rounded bg-warning bg-opacity-10 mb-2">
                                     <div class="d-flex align-items-center mb-2">
-                                        <label for="YearLimit" class="form-label compact-label"><i class="bi bi-speedometer2 me-2"></i> წლის ლიმიტი</label>
-                                        <input type="text" id="YearLimit" class="form-control form-control-sm flex-grow-1" readonly />
+                                        <label for="WineAlcPercent" class="form-label compact-label"><i class="bi bi-moisture me-1"></i> ღვინის ალკოჰოლი %</label>
+                                        <input type="number" step="0.01" name="WineAlcPercent" id="WineAlcPercent" class="form-control form-control-sm flex-grow-1" placeholder="მაგ. 11.5" />
+                                    </div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <label for="LossPercent" class="form-label compact-label"><i class="bi bi-graph-down-arrow me-1"></i> დანაკარგი %</label>
+                                        <input type="number" step="0.01" name="LossPercent" id="LossPercent" class="form-control form-control-sm flex-grow-1" placeholder="მაგ. 2.5" />
+                                    </div>
+                                </div>
+
+                                <div id="readOnlyInfoFields" class="mt-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <label for="VolumeBefore" class="form-label compact-label"><i class="bi bi-box-fill me-2"></i> ნაშთი თარიღისთვის</label>
+                                        <input type="text" id="VolumeBefore" class="form-control form-control-sm flex-grow-1" readonly />
                                     </div>
 
-                                    <div class="d-flex align-items-center mb-2">
-                                        <label for="PureLimit" class="form-label compact-label"><i class="bi bi-thermometer-half me-2"></i> სისუფთავის ლიმიტი</label>
-                                        <input type="text" id="PureLimit" class="form-control form-control-sm flex-grow-1" readonly />
+                                    <div class="d-flex align-items-center mb-2" id="limitDiv" style="display:none;">
+                                        <label for="MaxAllowed" class="form-label compact-label text-danger"><i class="bi bi-speedometer2 me-2"></i> დაშვებული ლიმიტი</label>
+                                        <input type="text" id="MaxAllowed" class="form-control form-control-sm flex-grow-1 border-danger text-danger fw-bold" readonly />
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </form>
                 </div>
+                
+
                 <!-- V. Action Buttons -->
                 <div class="card-footer bg-light d-flex justify-content-between p-3 sticky-bottom-custom">
                     <div class="d-flex gap-4">
@@ -306,7 +190,7 @@
                         <div class="vr mx-5"></div>
 
                         <button type="submit" class="btn btn-success btn-lg" id="AddButton" form="operationForm">
-                            <i class="bi bi-plus-circle-fill me-2"></i> დამატება
+                        <i class="bi bi-plus-circle-fill me-2"></i> დამატება
                         </button>
 
                         @* --- გამყოფი ხაზი (ვიზუალური დაშორებისთვის) --- *@
@@ -316,8 +200,8 @@
                             <i class="bi bi-clipboard-check me-2"></i> ჩატვირთვა
                         </button>
                     </div>
-                    <a asp-controller="CompanyBarrelDetails" asp-action="Index" asp-route-companyId="@Model.CompanyID"
-                       class="btn btn-secondary btn-lg">
+
+                    <a asp-controller="CompanyBarrelDetails" asp-action="Index" asp-route-companyId="@Model.CompanyID" class="btn btn-secondary btn-lg">
                         <i class="bi bi-arrow-left-circle-fill me-2"></i> უკან
                     </a>
                 </div>
@@ -325,7 +209,6 @@
         </div>
     </div>
 
-    <!-- ოპერაციების ისტორიის ცხრილი -->
     <h3 class="mb-3 mt-5"><i class="bi bi-clock-history me-2"></i> ოპერაციების ისტორია</h3>
     @if (Model.Operations?.Any() == true)
     {
@@ -336,14 +219,9 @@
                         <th>თარიღი</th>
                         <th>საბუთი</th>
                         <th>№</th>
-                        <th>სახელი</th>
-                        <th>წელი</th>
-                        <th>წლის %</th>
-                        <th>სუფთა %</th>
+                        <th>სასმელი</th>
                         <th>ტიპი</th>
                         <th>კატეგ.</th>
-                        <th>ფერი</th>
-                        <th>შაქრიანობა</th>
                         <th>ლიტრი</th>
                         <th>ოპერაცია</th>
                         <th>ნაშთი</th>
@@ -353,20 +231,7 @@
                 <tbody>
                     @foreach (var op in Model.Operations)
                     {
-                        var rowClass = "";
-                        if (op.Quantity.StartsWith("-"))
-                        {
-                            rowClass = "table-danger";
-                        }
-@*                         else if (op.BeverageName != Model.BeverageName || op.HarvestYear != Model.HarvestYear)
-                        {
-                            rowClass = "table-warning";
-                        } *@
-                        else
-                        {
-                            rowClass = "table-success";
-                        }
-
+                        var rowClass = op.Quantity.StartsWith("-") ? "table-danger" : "table-success";
                         <tr class="@rowClass">
                             <td>@op.TransactionDate.ToString("yyyy-MM-dd")</td>
                             <td>@op.DocumentTypeName</td>
@@ -374,26 +239,18 @@
                             <td>
                                 @op.BeverageName
                                 <div style="text-align: right; font-size: small; font-weight: bold; color: black;">
-                                    @op.ExecutedByUserFullName
+                                    @op.ExecutedByUserFirstName @op.ExecutedByUserLastName
                                 </div>
                             </td>
-                            <td>@op.HarvestYear</td>
-                            <td>@op.YearPercentage</td>
-                            <td>@op.PurePercentage</td>
                             <td>@op.ProductType</td>
                             <td>@op.Category</td>
-                            <td>@op.Color</td>
-                            <td>@op.Sweetness</td>
-                            <td>@op.Quantity</td>
+                            <td class="fw-bold">@op.Quantity</td>
                             <td>
                                 @op.OperName
-                                @* --- ახალი დამატებული კოდი კასრის ლინკისთვის --- *@
-                                @if (!string.IsNullOrEmpty(op.SourceCompanyName)&(op.SourceBarrelID != null))
+                                @if (!string.IsNullOrEmpty(op.SourceCompanyName) && op.SourceBarrelID != null)
                                 {
                                     <div style="text-align: left; font-size: small; font-weight: bold; color: black;">
-                                        <a href="@Url.Action("Index", "Operations", new { barrelId = op.SourceBarrelID })"
-                                           @* class="badge bg-primary text-white text-decoration-none p-2" *@
-                                           title="გადასვლა დაკავშირებულ კასრზე">
+                                        <a href="@Url.Action("Index", "Operations_Spirits", new { barrelId = op.SourceBarrelID })" title="გადასვლა კასრზე">
                                             <i class="bi bi-box-arrow-up-right me-1"></i> @op.SourceCompanyName: #@op.SourceBarrelID
                                         </a>
                                     </div>
@@ -401,18 +258,10 @@
                             </td>
                             <td>@op.VolumeLeft</td>
                             <td class="text-end">
-                                <div class="d-flex justify-content-end gap-2">
-                                    @* <button type="button" class="btn btn-warning btn-sm" onclick="editOperation(@op.OperationID)" title="რედაქტირება">
-                                        <i class="bi bi-pencil-fill"></i>
-                                    </button> *@
-
-                                    <form asp-action="Delete" method="post" asp-controller="Operations_Spirits" class="delete-form">
-                                        <input type="hidden" name="operationId" value="@op.OperationID" />
-                                        <button type="submit" class="btn btn-danger btn-sm" title="წაშლა">
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
-                                    </form>
-                                </div>
+                                <form asp-action="Delete" method="post" class="delete-form d-inline">
+                                    <input type="hidden" name="operationId" value="@op.OperationID" />
+                                    <button type="submit" class="btn btn-danger btn-sm" title="წაშლა"><i class="bi bi-trash-fill"></i></button>
+                                </form>
                             </td>
                         </tr>
                     }
@@ -420,581 +269,156 @@
             </table>
         </div>
     }
-    else
-    {
-        <div class="alert alert-info text-center" role="alert">
-            <i class="bi bi-exclamation-circle-fill me-2"></i> ოპერაციები ვერ იქნა ნაპოვნი.
-        </div>
-    }
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
     <style>
-        /* Custom CSS for sticky footer in card */
-        .card.d-flex.flex-column {
-            min-height: 500px; /* Adjust as needed, ensure card is tall enough to scroll */
-        }
-
-        .card-body.overflow-auto {
-            flex-grow: 1; /* Allows the body to take up available space and scroll */
-        }
-
-        .sticky-bottom-custom {
-            position: sticky;
-            bottom: 0;
-            z-index: 10; /* Ensure it stays above other content */
-        }
-
-        /* Responsive adjustments for the info section characteristics card */
-        @@media (min-width: 768px) {
-            .col-lg-4.col-md-6 {
-                display: flex;
-                flex-direction: column;
-            }
-
-                .col-lg-4.col-md-6 .card:last-child {
-                    flex-grow: 1; /* Makes the last card grow to fill available space */
-                }
-        }
-
-        /* --- New styles for labels next to inputs --- */
-        .compact-label {
-            width: 140px; /* Adjust this width as needed for your longest label */
-            flex-shrink: 0; /* Prevent label from shrinking */
-            margin-right: 0.5rem; /* Space between label and input */
-            text-align: right; /* Align label text to the right for better visual flow */
-            margin-bottom: 0 !important; /* Override default Bootstrap margin-bottom */
-            font-size: 0.875rem; /* Smaller font for labels to fit */
-        }
-
-        /* Adjustments for inputs themselves */
-        .form-control-sm, .form-select-sm {
-            height: calc(1.8125rem + 2px); /* Standard Bootstrap small control height */
-            padding: 0.25rem 0.5rem; /* Adjust padding for smaller height */
-            font-size: 0.875rem; /* Smaller font for inputs */
-        }
-
-        /* Adjust alert padding */
-        #operationInfo.alert {
-            padding-top: 0.4rem;
-            padding-bottom: 0.4rem;
-            margin-bottom: 0.5rem !important; /* Slightly reduce margin below alert */
-        }
-
-        /* Adjust margin-bottom for the d-flex containers */
-        .d-flex.align-items-center.mb-2 {
-            margin-bottom: 0.5rem !important; /* Reduce vertical space between rows */
-        }
-
-        /* Styles for table with sticky header and horizontal scroll */
-        .table-responsive {
-            max-height: 500px;
-            overflow-y: auto;
-            overflow-x: auto; /* ✅ ამატებს ჰორიზონტალურ სქროლს */
-            width: 100%;
-        }
-
-            /* ✅ უზრუნველყოფს, რომ ტექსტი არ გადავიდეს ახალ ხაზზე და სქროლი იმუშაოს სწორად */
-            .table-responsive .table td,
-            .table-responsive .table th {
-                white-space: nowrap;
-            }
-
-        .table thead th {
-            position: sticky;
-            top: 0;
-            background-color: var(--bs-table-bg, #f8f9fa);
-            z-index: 2;
-            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        /* ✅ აფიქსირებს ბოლო სვეტს (წაშლის ღილაკს) მარჯვენა მხარეს სქროლის დროს */
-        .table th:last-child,
-        .table td:last-child {
-            position: sticky;
-            right: 0;
-            background-color: var(--bs-table-bg, #f8f9fa); /* ფონი, რომ ქვემოდან ტექსტი არ გამოჩნდეს */
-            z-index: 1; /* უნდა იყოს სხვა უჯრებზე მაღლა */
-            box-shadow: -2px 0 5px rgba(0,0,0,0.05); /* მსუბუქი ჩრდილი მარცხნივ, ვიზუალისთვის */
-        }
-
-        .table thead th:last-child {
-            z-index: 3; /* სათაურის ბოლო უჯრა ყველაზე მაღლა უნდა იყოს */
-        }
-
-        /* NEW: Style for readonly inputs */
-        input[readonly].form-control,
-        select[readonly].form-control {
-            background-color: #e9ecef; /* A light grey background */
-            opacity: 1; /* Ensure opacity is full */
-            cursor: default; /* Indicate it's not editable */
-        }
+        .compact-label { width: 140px; flex-shrink: 0; margin-right: 0.5rem; text-align: right; margin-bottom: 0 !important; font-size: 0.875rem; }
+        .table-responsive { max-height: 500px; overflow-y: auto; overflow-x: auto; width: 100%; }
+        .table-responsive .table td, .table-responsive .table th { white-space: nowrap; }
+        .table thead th { position: sticky; top: 0; background-color: var(--bs-table-bg, #f8f9fa); z-index: 2; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1); }
+        .table th:last-child, .table td:last-child { position: sticky; right: 0; background-color: var(--bs-table-bg, #f8f9fa); z-index: 1; box-shadow: -2px 0 5px rgba(0,0,0,0.05); }
+        .table thead th:last-child { z-index: 3; }
+        input[readonly], select[readonly] { background-color: #e9ecef; opacity: 1; cursor: default; }
     </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-
-            // Cache DOM elements
-            const companySearchInput = document.getElementById('CompanySearch');
-            const oppositeCompanySelect = document.getElementById('OppositeCompanyID');
-            const barrelSearchInput = document.getElementById('BarrelSearch');
-            const oppositeBarrelSelect = document.getElementById('OppositeBarrelID');
-            const operationDefSelect = document.getElementById('OperationDefID');
-            const operationInfoBox = document.getElementById('operationInfo');
+            // Caching DOM elements
+            const opDefSelect = document.getElementById('OperationDefID');
             const operTypeInput = document.getElementById('OperType');
-            const preserveBarrelStateInput = document.getElementById('PreserveBarrelState');
-            const unitVolumeInput = document.getElementById('UnitVolume');
-            const bottleCountInput = document.getElementById('BottleCount');
-            const quantityInput = document.getElementById('Quantity');
-            const transactionDateInput = document.getElementById('TransactionDate');
-            const volumeBeforeInput = document.getElementById('VolumeBefore');
-            const beverageIdInput = document.querySelector('[name="BeverageID"]');
-            const bevNameInput = document.getElementById('bevName');
-            const bevTypeInput = document.getElementById('bevType');
-            const bevCategoryInput = document.getElementById('bevCategory');
-            const bevColorInput = document.getElementById('bevColor');
-            const bevSweetnessInput = document.getElementById('bevSweetness');
-            const yearPercentReadOnlyInput = document.getElementById('YearPercentReadOnly');
-            const purePercentReadOnlyInput = document.getElementById('PurePercentReadOnly');
-            const yearLimitInput = document.getElementById('YearLimit');
-            const pureLimitInput = document.getElementById('PureLimit');
+            const compBarrelFields = document.getElementById('companyBarrelFields');
+            const distFields = document.getElementById('distillationFields');
+            const limitDiv = document.getElementById('limitDiv');
+            
+            const oppCompSelect = document.getElementById('OppositeCompanyID');
+            const oppBarrelSelect = document.getElementById('OppositeBarrelID');
+            const compSearchDiv = document.getElementById('companySearchDiv');
+            const compSelectDiv = document.getElementById('companySelectDiv');
+            
+            const transDateInput = document.getElementById('TransactionDate');
+            const volBeforeInput = document.getElementById('VolumeBefore');
+            const maxAllowedInput = document.getElementById('MaxAllowed');
             const addButton = document.getElementById('AddButton');
-            const harvestYearInput = document.getElementById('HarvestYear');
-            const yearAPercentInput = document.getElementById('YearAPercentInput');
-            const pureAPercentInput = document.getElementById('PureAPercentInput');
 
-            // Sections to dynamically show/hide
-            const companyBarrelFields = document.getElementById('companyBarrelFields');
-            const harvestPurityFields = document.getElementById('harvestPurityFields');
-            const limitFields = document.getElementById('limitFields'); // NEW: Cache the new wrapper div
+            const barrelId = @Model.BarrelID;
 
-
-            // --- Helper Functions ---
-
-            function filterDropdown(inputElement, selectElement) {
-                const filter = inputElement.value.toLowerCase();
-                Array.from(selectElement.options).forEach(opt => {
-                    const txt = opt.text.toLowerCase();
-                    opt.style.display = txt.includes(filter) ? 'block' : 'none';
-                });
-            }
-
-            function updateQuantityFromPieces() {
-                const unitVolume = parseFloat(unitVolumeInput.value);
-                const bottleCount = parseFloat(bottleCountInput.value);
-
-                if (!isNaN(unitVolume) && !isNaN(bottleCount)) {
-                    quantityInput.value = (unitVolume * bottleCount).toFixed(2);
-                } else {
-                    quantityInput.value = ''; // Clear if inputs are not valid numbers
-                }
-            }
-
-            async function updateVolumeByDate() {
-                const operType = operTypeInput.value;
-                const barrelId = @Model.BarrelID;
-                const oppositeBarrelId = oppositeBarrelSelect.value; // Will be empty if not applicable
-                const date = transactionDateInput.value;
-
-                // Clear beverage data and read-only fields first
-                beverageIdInput.value = "";
-                bevNameInput.value = "";
-                bevTypeInput.value = "";
-                bevCategoryInput.value = "";
-                bevColorInput.value = "";
-                bevSweetnessInput.value = "";
-                volumeBeforeInput.value = "";
-                yearPercentReadOnlyInput.value = "";
-                purePercentReadOnlyInput.value = "";
-                yearLimitInput.value = ""; // Clear limit values
-                pureLimitInput.value = ""; // Clear limit values
-                addButton.disabled = true;
-
-
-                if (!operType || !barrelId || !date) {
-                    return;
-                }
-
-                // For OperType 2, oppositeBarrelId must be selected
-                if ((operType == 2 || operType == 4) && !oppositeBarrelId) {
-                     return;
-                }
-                // For OperType 3, oppositeCompanyId and oppositeBarrelId must be selected
-                if (operType == 3 && (!oppositeCompanySelect.value || !oppositeBarrelId)) {
-                    return;
-                }
-
-                const url = `/api/operations/get-data-by-transdate?operType=${operType}&barrelId=${barrelId}&oppositeBarrelId=${oppositeBarrelId}&transactionDate=${date}`;
-
-                try {
-                    const response = await fetch(url);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const data = await response.json();
-
-                    volumeBeforeInput.value = data.volume?.toFixed(2) + " ლ" ?? "";
-                    beverageIdInput.value = data.beverageId || "";
-                    bevNameInput.value = data.beverageName || "";
-                    bevTypeInput.value = data.productType || "";
-                    bevCategoryInput.value = data.category || "";
-                    bevColorInput.value = data.color || "";
-                    bevSweetnessInput.value = data.sweetness || "";
-                    yearPercentReadOnlyInput.value = data.yearPercent ?? "";
-                    purePercentReadOnlyInput.value = data.purePercent ?? "";
-
-                    if (data.yearLimit === -1) {
-                            yearLimitInput.value = "ლიმიტის გარეშე";
-                        } else {
-                            yearLimitInput.value = data.yearLimit ?? ""; // თუ -1 არ არის, გამოაჩინე რიცხვი ან ცარიელი სტრიქონი თუ null/undefined
-                        }
-
-                    // ცვლილება აქ: PureLimit (ანალოგიურად YearLimit-ის)
-                    if (data.pureLimit === -1) {
-                            pureLimitInput.value = "ლიმიტის გარეშე";
-                        } else {
-                            pureLimitInput.value = data.pureLimit ?? ""; // თუ -1 არ არის, გამოაჩინე რიცხვი ან ცარიელი სტრიქონი თუ null/undefined
-                        }
-
-                    addButton.disabled = !data.allowMix;
-                    } catch (error) {
-                        console.error("Error fetching volume data:", error);
-                        volumeBeforeInput.value = "შეცდომა";
-                        yearLimitInput.value = ""; // Clear if error
-                        pureLimitInput.value = ""; // Clear if error
-                        addButton.disabled = true;
-                    }
-                }
-
-        function toggleHarvestPurityFields() {
-            const preserve = preserveBarrelStateInput.value;
-            const isDisabled = (preserve === "1" || preserve?.toLowerCase() === "true");
-
-            harvestYearInput.disabled = isDisabled;
-            yearAPercentInput.disabled = isDisabled;
-            pureAPercentInput.disabled = isDisabled;
-
-            if (isDisabled) {
-                harvestPurityFields.style.display = 'none';
-                // ამოვიღეთ: მნიშვნელობების გასუფთავება (რომ არ დაიკარგოს დამალვისას)
-            } else {
-                harvestPurityFields.style.display = 'block';
-
-                // 1. თუ მოსავლის წელი ცარიელია, აღვადგინოთ საწყისი მნიშვნელობა (რაც გვერდის ჩატვირთვისას იყო)
-                if (!harvestYearInput.value) {
-                    harvestYearInput.value = harvestYearInput.defaultValue;
-                }
-
-                // 2. თუ პროცენტები ცარიელია, დავუწეროთ 100
-                if (!yearAPercentInput.value) {
-                    yearAPercentInput.value = '100';
-                }
-                if (!pureAPercentInput.value) {
-                    pureAPercentInput.value = '100';
-                }
-            }
-        }
-
-            // NEW FUNCTION: To toggle visibility of YearLimit and PureLimit
-            function toggleLimitFields() {
-                const operType = operTypeInput.value;
-                if (operType == 2 || operType == 3 || operType == 4) { // Show for OperType 2 (Transfer within company) or 3 (Transfer to other company)
-                    limitFields.style.display = 'block';
-                } else { // Hide for OperType 1 (Entry/Exit) or not selected
-                    limitFields.style.display = 'none';
-                    yearLimitInput.value = ''; // Clear values when hidden
-                    pureLimitInput.value = ''; // Clear values when hidden
-                }
-            }
-
-
-            // Function to handle company and barrel fields visibility and data loading based on OperType
-            async function handleCompanyBarrelFields() {
-                const operType = operTypeInput.value;
-
-                // Reset all company/barrel related fields
-                oppositeCompanySelect.innerHTML = '<option value="">აირჩიეთ კომპანია</option>';
-                oppositeCompanySelect.disabled = true;
-                companySearchInput.disabled = true;
-                companySearchInput.value = '';
-
-                oppositeBarrelSelect.innerHTML = ''; // Clear options
-                oppositeBarrelSelect.disabled = true;
-                barrelSearchInput.disabled = true;
-                barrelSearchInput.value = '';
-
-                if (operType == 3) { // Transfer to other company
-                    companyBarrelFields.style.display = 'block';
-                    oppositeCompanySelect.disabled = false;
-                    companySearchInput.disabled = false;
-
-                    try {
-                        const response = await fetch(`/api/operations/filtered-companies?barrelId=${@Model.BarrelID}`);
-                        const companies = await response.json();
-                        companies.forEach(c => {
-                            oppositeCompanySelect.innerHTML += `<option value="${c.value}">${c.text}</option>`;
-                        });
-                    } catch (error) {
-                        console.error("Error fetching companies:", error);
-                    }
-
-                } else if (operType == 2 || operType == 4) {
-                    companyBarrelFields.style.display = 'block';
-                    oppositeBarrelSelect.disabled = false;
-                    barrelSearchInput.disabled = false;
-
-                    try {
-                        // ✅ შესწორება: operType=2 შეიცვალა operType=${operType}-ით
-                        const response = await fetch(`/api/operations/filtered-barrels?barrelId=${@Model.BarrelID}&operType=${operType}`);
-                        const barrels = await response.json();
-                        barrels.forEach(b => {
-                            oppositeBarrelSelect.innerHTML += `<option value="${b.value}">${b.text}</option>`;
-                        });
-                    } catch (error) {
-                        console.error("Error fetching barrels for OperType 2/4:", error);
-                    }
-                } else { // Other operations (e.g., OperType 1 - Entry/Exit etc.)
-                    companyBarrelFields.style.display = 'none';
-                    // No need to clear values here, as the div is hidden
-                }
-                updateVolumeByDate(); // Call this after updating barrel/company fields
-            }
-
-
-            // --- Event Listeners ---
-
-            companySearchInput.addEventListener('input', () => filterDropdown(companySearchInput, oppositeCompanySelect));
-            barrelSearchInput.addEventListener('input', () => filterDropdown(barrelSearchInput, oppositeBarrelSelect));
-
-            unitVolumeInput.addEventListener('input', updateQuantityFromPieces);
-            bottleCountInput.addEventListener('input', updateQuantityFromPieces);
-
-            operationDefSelect.addEventListener('change', async function () {
+            // 1. ოპერაციის ტიპის არჩევა და ველების გამოჩენა/დამალვა
+            opDefSelect.addEventListener('change', async function () {
                 const selectedId = this.value;
                 if (!selectedId) {
-                    operationInfoBox.style.display = 'none'; // Keep this line if operationInfoBox is used
-                    operTypeInput.value = '';
-                    preserveBarrelStateInput.value = '';
-                    handleCompanyBarrelFields(); // Reset and hide company/barrel fields
-                    toggleHarvestPurityFields(); // Reset and hide harvest/purity fields
-                    toggleLimitFields(); // NEW: Toggle limit fields
-                    updateVolumeByDate(); // Update volume data
+                    resetFields();
                     return;
                 }
 
                 const selected = operationDefinitionsData.find(o => o.operationDefID == selectedId);
                 if (selected) {
-                    // You can uncomment this if you want the operation info box to show details
-                    // operationInfoBox.innerHTML = `<strong>ოპერაციის ტიპი:</strong> ${selected.operType === 1 ? 'შესვლა' : selected.operType === 2 ? 'გადანაწილება' : selected.operType === 3 ? 'გამოშვება' : 'უცნობი'} <br/><strong>კასრის მდგომარეობის შენარჩუნება:</strong> ${selected.preserveBarrelState ? 'დიახ' : 'არა'}`;
-                    // operationInfoBox.style.display = 'block';
-
                     operTypeInput.value = selected.operType;
-                    preserveBarrelStateInput.value = selected.preserveBarrelState;
-
-                    await handleCompanyBarrelFields(); // This will handle showing/hiding company/barrel fields and loading data
-                    toggleHarvestPurityFields(); // This will handle showing/hiding harvest/purity fields
-                    toggleLimitFields(); // NEW: Toggle limit fields based on new operType
-                    updateVolumeByDate(); // Update volume data after all other fields are set
+                    await handleOperTypeLogic(selected.operType);
                 }
             });
 
-            oppositeCompanySelect.addEventListener('change', async function () {
-                const companyId = this.value;
-                oppositeBarrelSelect.innerHTML = ''; // Clear options
-                oppositeBarrelSelect.disabled = true;
-                barrelSearchInput.disabled = true;
-                barrelSearchInput.value = '';
+            async function handleOperTypeLogic(operType) {
+                // Reset states
+                compBarrelFields.style.display = 'none';
+                distFields.style.display = 'none';
+                limitDiv.style.display = 'none';
+                
+                oppCompSelect.innerHTML = '<option value="">აირჩიეთ კომპანია</option>';
+                oppBarrelSelect.innerHTML = '<option value="">აირჩიეთ კასრი</option>';
 
-                if (!companyId) {
-                    updateVolumeByDate();
-                    return;
+                if (operType == 2 || operType == 4 || operType == 5) {
+                    compBarrelFields.style.display = 'block';
+                    compSearchDiv.style.display = 'none'; 
+                    compSelectDiv.style.display = 'none';
+                    
+                    if (operType == 5) {
+                        distFields.style.display = 'block'; 
+                    }
+                    
+                    await loadBarrels(operType, null);
+                } 
+                else if (operType == 3) {
+                    compBarrelFields.style.display = 'block';
+                    compSearchDiv.style.display = 'flex';
+                    compSelectDiv.style.display = 'flex';
+                    await loadCompanies();
                 }
+                
+                updateVolumeByDate();
+            }
+
+            async function loadCompanies() {
+                try {
+                    const response = await fetch(`/api/spirits-operations/filtered-companies?barrelId=${barrelId}`);
+                    const companies = await response.json();
+                    companies.forEach(c => oppCompSelect.innerHTML += `<option value="${c.value}">${c.text}</option>`);
+                } catch (e) { console.error("Error loading companies", e); }
+            }
+
+            async function loadBarrels(operType, companyId) {
+                try {
+                    let url = `/api/operations-spirits/filtered-barrels?barrelId=${barrelId}&operType=${operType}`;
+                    if (companyId) url += `&companyId=${companyId}`;
+                    
+                    const response = await fetch(url);
+                    const barrels = await response.json();
+                    oppBarrelSelect.innerHTML = '<option value="">აირჩიეთ კასრი</option>';
+                    barrels.forEach(b => oppBarrelSelect.innerHTML += `<option value="${b.value}">${b.text}</option>`);
+                } catch (e) { console.error("Error loading barrels", e); }
+            }
+
+            oppCompSelect.addEventListener('change', function() {
+                if (this.value) loadBarrels(3, this.value);
+            });
+
+            // 2. თარიღით ნაშთების და ლიმიტების გადათვლა
+            oppBarrelSelect.addEventListener('change', updateVolumeByDate);
+            transDateInput.addEventListener('change', updateVolumeByDate);
+
+            async function updateVolumeByDate() {
+                const operType = operTypeInput.value;
+                const oppBarrelId = oppBarrelSelect.value;
+                const date = transDateInput.value;
+
+                volBeforeInput.value = "";
+                maxAllowedInput.value = "";
+                addButton.disabled = true;
+
+                if (!operType || !date) return;
+                if ((operType == 2 || operType == 3 || operType == 4 || operType == 5) && !oppBarrelId) return;
 
                 try {
-                    const response = await fetch(`/api/operations/filtered-barrels?barrelId=${@Model.BarrelID}&operType=3&companyId=${companyId}`);
-                    const barrels = await response.json();
-                    barrels.forEach(b => {
-                        oppositeBarrelSelect.innerHTML += `<option value="${b.value}">${b.text}</option>`;
-                    });
-                    oppositeBarrelSelect.disabled = false;
-                    barrelSearchInput.disabled = false;
-                } catch (error) {
-                    console.error("Error fetching barrels for company:", error);
-                }
-                updateVolumeByDate();
-            });
+                    const url = `/api/operations-spirits/get-data-by-transdate?operType=${operType}&barrelId=${barrelId}&oppositeBarrelId=${oppBarrelId || 0}&transactionDate=${date}`;
+                    const response = await fetch(url);
+                    const data = await response.json();
 
-            oppositeBarrelSelect.addEventListener('change', updateVolumeByDate);
-            transactionDateInput.addEventListener('change', updateVolumeByDate);
-
-            // Initial calls on page load
-            handleCompanyBarrelFields(); // Initial state of company/barrel fields
-            toggleHarvestPurityFields(); // Initial state of harvest/purity fields
-            toggleLimitFields(); // NEW: Initial state of limit fields
-            updateVolumeByDate(); // Initial update of volume data
-
-            // SweetAlert2 messages
-            const msg = @Html.Raw(Json.Serialize(TempData["Message"]?.ToString() ?? ""));
-            const status = "@(TempData["Status"]?.ToString() ?? "")";
-            const delMsg = @Html.Raw(Json.Serialize(TempData["DeleteMessage"]?.ToString() ?? ""));
-            const delStatus = "@(TempData["DeleteStatus"]?.ToString() ?? "")";
-            const formDataJson = @Html.Raw(Json.Serialize(TempData["FormData"]?.ToString() ?? ""));
-
-            // Function to restore form data
-            function restoreFormData() {
-                if (formDataJson && formDataJson !== "") {
-                    try {
-                        const formData = JSON.parse(formDataJson);
-                        console.log('Restoring form data:', formData);
-
-                        // Restore operation definition first as it affects other fields
-                        if (formData.OperationDefID) {
-                            operationDefSelect.value = formData.OperationDefID;
-                            // Trigger change event to update dependent fields
-                            const changeEvent = new Event('change');
-                            operationDefSelect.dispatchEvent(changeEvent);
-                            
-                            // Wait for operation definition change to complete, then restore other fields
-                            setTimeout(() => {
-                                restoreOtherFields(formData);
-                            }, 500);
-                        } else {
-                            restoreOtherFields(formData);
-                        }
-
-                        console.log('Form data restoration initiated');
-                    } catch (error) {
-                        console.error('Error restoring form data:', error);
-                    }
-                }
-            }
-
-            function restoreOtherFields(formData) {
-                // Restore basic fields
-                if (formData.TransactionDate) {
-                    transactionDateInput.value = formData.TransactionDate.split('T')[0]; // Handle datetime format
-                    transactionDateInput.dispatchEvent(new Event('change'));
-                }
-                
-                if (formData.Quantity) {
-                    quantityInput.value = formData.Quantity;
-                }
-                
-                if (formData.DocumentTypeID) {
-                    const docTypeSelect = document.getElementById('DocumentTypeID');
-                    if (docTypeSelect) {
-                        docTypeSelect.value = formData.DocumentTypeID;
-                    }
-                }
-                
-                if (formData.DocumentNumber) {
-                    const docNumberInput = document.getElementById('DocumentNumber');
-                    if (docNumberInput) {
-                        docNumberInput.value = formData.DocumentNumber;
-                    }
-                }
-                
-                if (formData.HarvestYear) {
-                    harvestYearInput.value = formData.HarvestYear;
-                }
-                
-                if (formData.YearAPercent) {
-                    yearAPercentInput.value = formData.YearAPercent;
-                }
-                
-                if (formData.PureAPercent) {
-                    pureAPercentInput.value = formData.PureAPercent;
-                }
-                
-                // Restore company and barrel selections with proper sequencing
-                if (formData.OppositeCompanyID && oppositeCompanySelect) {
-                    oppositeCompanySelect.value = formData.OppositeCompanyID;
-                    oppositeCompanySelect.dispatchEvent(new Event('change'));
+                    volBeforeInput.value = data.volume.toFixed(2) + " ლ";
                     
-                    // Wait for company change to complete, then restore barrel
-                    if (formData.OppositeBarrelID) {
-                        setTimeout(() => {
-                            if (oppositeBarrelSelect) {
-                                oppositeBarrelSelect.value = formData.OppositeBarrelID;
-                                oppositeBarrelSelect.dispatchEvent(new Event('change'));
-                            }
-                        }, 1000);
+                    if (operType == 2 || operType == 3 || operType == 4 || operType == 5) {
+                        limitDiv.style.display = 'flex';
+                        maxAllowedInput.value = data.maxAllowed > 0 ? data.maxAllowed.toFixed(2) + " ლ" : "ლიმიტის გარეშე";
                     }
-                } else if (formData.OppositeBarrelID && oppositeBarrelSelect) {
-                    // Direct barrel restoration for OperType 2
-                    setTimeout(() => {
-                        oppositeBarrelSelect.value = formData.OppositeBarrelID;
-                        oppositeBarrelSelect.dispatchEvent(new Event('change'));
-                    }, 500);
-                }
 
-                // Calculate unit volume and bottle count if quantity is provided but these fields are empty
-                if (formData.Quantity && !unitVolumeInput.value && !bottleCountInput.value) {
-                    const qty = parseFloat(formData.Quantity);
-                    if (qty <= 1) {
-                        unitVolumeInput.value = qty.toString();
-                        bottleCountInput.value = "1";
-                    } else if (qty <= 10) {
-                        unitVolumeInput.value = "0.75";
-                        bottleCountInput.value = Math.round(qty / 0.75).toString();
-                    } else {
-                        unitVolumeInput.value = "1";
-                        bottleCountInput.value = qty.toString();
-                    }
+                    addButton.disabled = false;
+                } catch (error) {
+                    console.error("Error fetching volume data:", error);
+                    volBeforeInput.value = "შეცდომა";
                 }
             }
 
-            // Show SweetAlert messages and restore form data
-            if (msg && msg !== "") {
-                Swal.fire({
-                    icon: status === "success" ? 'success' : status === "warning" ? 'warning' : 'error',
-                    title: status === "success" ? 'წარმატება!' : 'შეტყობინება',
-                    text: msg,
-                    confirmButtonText: 'OK',
-                }).then(() => {
-                    // Restore form data after alert is dismissed
-                    if (status !== "success") {
-                        restoreFormData();
-                    }
-                });
-            } else if (delMsg && delMsg !== "") {
-                Swal.fire({
-                    icon: delStatus === "success" ? 'success' : delStatus === "warning" ? 'warning' : 'error',
-                    title: delStatus === "success" ? 'წაშლა წარმატებულია!' :
-                            delStatus === "warning" ? 'გაფრთხილება' : 'შეცდომა',
-                    text: delMsg,
-                    confirmButtonText: 'OK',
-                });
-            } else {
-                // Restore form data immediately if no alerts to show
-                restoreFormData();
+            function resetFields() {
+                operTypeInput.value = '';
+                compBarrelFields.style.display = 'none';
+                distFields.style.display = 'none';
+                limitDiv.style.display = 'none';
+                volBeforeInput.value = '';
+                addButton.disabled = true;
             }
 
-            // Delete confirmation with SweetAlert2
-            document.querySelectorAll('form.delete-form').forEach(form => {
-                form.addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'დარწმუნებული ხართ?',
-                        text: "გსურთ ოპერაციის წაშლა? ეს მოქმედება შეუქცევადია!",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'დიახ, წაშალე!',
-                        cancelButtonText: 'გაუქმება'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            form.submit();
-                        }
-                    });
-                });
-            });
-
-            // Load from F1 Clipboard functionality
+            // ----------------------------------------------------
+            // 3. F1 Clipboard ლოგიკა (გასწორებული ცვლადებით)
+            // ----------------------------------------------------
             const loadFromClipboardBtn = document.getElementById('LoadFromClipboardBtn');
             const documentTypeSelect = document.getElementById('DocumentTypeID');
             const documentNumberInput = document.getElementById('DocumentNumber');
@@ -1003,216 +427,119 @@
                 loadFromClipboardBtn.addEventListener('click', function() {
                     try {
                         console.log('Loading clipboard data...');
-                        
-                        // Get data from global clipboard
                         const clipboardData = window.getClipboardData ? window.getClipboardData() : {};
-                        console.log('Clipboard data:', clipboardData);
-                        
                         let fieldsLoaded = 0;
                         
-                        // Load საბუთი (Document Type) - use the value directly
+                        // Load საბუთი
                         if (clipboardData.sabuti && documentTypeSelect) {
-                            console.log('Loading document type:', clipboardData.sabuti, clipboardData.sabutiText);
-                            
-                            // Try to set by value first (direct match)
                             if (clipboardData.sabuti) {
                                 documentTypeSelect.value = clipboardData.sabuti;
-                                if (documentTypeSelect.value) {
-                                    fieldsLoaded++;
-                                    console.log('Document type set by value:', clipboardData.sabuti);
-                                }
+                                if (documentTypeSelect.value) fieldsLoaded++;
                             }
                             
-                            // If no direct value match and we have text, try to match by text
                             if (!documentTypeSelect.value && clipboardData.sabutiText) {
                                 const sabutiText = clipboardData.sabutiText.toLowerCase().trim();
                                 const options = Array.from(documentTypeSelect.options);
-                                
                                 const matchedOption = options.find(option => 
                                     option.text.toLowerCase().includes(sabutiText) || 
                                     sabutiText.includes(option.text.toLowerCase())
                                 );
-                                
                                 if (matchedOption) {
                                     documentTypeSelect.value = matchedOption.value;
                                     fieldsLoaded++;
-                                    console.log('Document type set by text match:', matchedOption.value, matchedOption.text);
                                 }
-                            }
-                            
-                            if (!documentTypeSelect.value) {
-                                console.warn('საბუთის ტიპი ვერ მოიძებნა:', clipboardData.sabutiText || clipboardData.sabuti);
                             }
                         }
                         
-                        // Load N (Document Number)
+                        // Load N
                         if (clipboardData.number && documentNumberInput) {
                             documentNumberInput.value = clipboardData.number;
                             fieldsLoaded++;
-                            console.log('Document number loaded:', clipboardData.number);
                         }
                         
-                        // Load თარიღი (Date)
-                        if (clipboardData.date && transactionDateInput) {
-                            transactionDateInput.value = clipboardData.date;
+                        // Load თარიღი (გამოყენებულია transDateInput)
+                        if (clipboardData.date && transDateInput) {
+                            transDateInput.value = clipboardData.date;
                             fieldsLoaded++;
-                            console.log('Date loaded:', clipboardData.date);
-                            
-                            // Trigger change event to update volume data
-                            transactionDateInput.dispatchEvent(new Event('change'));
+                            transDateInput.dispatchEvent(new Event('change'));
                         }
                         
-                        console.log('Total fields loaded:', fieldsLoaded);
-                        
-                        // Show success notification
+                        // UI განახლება
                         if (fieldsLoaded > 0) {
-                            // Simple success indication
                             loadFromClipboardBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i> ჩაიტვირთა';
-                            loadFromClipboardBtn.classList.remove('btn-info');
-                            loadFromClipboardBtn.classList.add('btn-success');
-                            
-                            // Reset button after 2 seconds
+                            loadFromClipboardBtn.classList.replace('btn-info', 'btn-success');
                             setTimeout(() => {
                                 loadFromClipboardBtn.innerHTML = '<i class="bi bi-clipboard-check me-2"></i> ჩატვირთვა';
-                                loadFromClipboardBtn.classList.remove('btn-success');
-                                loadFromClipboardBtn.classList.add('btn-info');
-                            }, 2000);
+                                loadFromClipboardBtn.classList.replace('btn-success', 'btn-info');
+                            }, 1000);
                         } else {
-                            // No data found
                             loadFromClipboardBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i> ცარიელია';
-                            loadFromClipboardBtn.classList.remove('btn-info');
-                            loadFromClipboardBtn.classList.add('btn-warning');
-                            
+                            loadFromClipboardBtn.classList.replace('btn-info', 'btn-warning');
                             setTimeout(() => {
                                 loadFromClipboardBtn.innerHTML = '<i class="bi bi-clipboard-check me-2"></i> ჩატვირთვა';
-                                loadFromClipboardBtn.classList.remove('btn-warning');
-                                loadFromClipboardBtn.classList.add('btn-info');
-                            }, 2000);
+                                loadFromClipboardBtn.classList.replace('btn-warning', 'btn-info');
+                            }, 1000);
                         }
-                        
                     } catch (error) {
                         console.error('Error loading clipboard data:', error);
-                        
-                        // Show error state
                         loadFromClipboardBtn.innerHTML = '<i class="bi bi-x-circle me-2"></i> შეცდომა';
-                        loadFromClipboardBtn.classList.remove('btn-info');
-                        loadFromClipboardBtn.classList.add('btn-danger');
-                        
+                        loadFromClipboardBtn.classList.replace('btn-info', 'btn-danger');
                         setTimeout(() => {
                             loadFromClipboardBtn.innerHTML = '<i class="bi bi-clipboard-check me-2"></i> ჩატვირთვა';
-                            loadFromClipboardBtn.classList.remove('btn-danger');
-                            loadFromClipboardBtn.classList.add('btn-info');
+                            loadFromClipboardBtn.classList.replace('btn-danger', 'btn-info');
                         }, 2000);
                     }
                 });
             }
-
-
-        });
-    </script>
-    <script>
-        // 1. ეს ბლოკი ეშვება გვერდის ჩატვირთვისას
-        document.addEventListener("DOMContentLoaded", function () {
-            // აქ დატოვეთ მხოლოდ ის კოდი, რაც გვერდის ჩატვირთვისას უნდა მოხდეს
-            // (მაგალითად, Clipboard-ის კოდი, თუ გაქვთ)
-
-            const loadFromClipboardBtn = document.getElementById('loadFromClipboardBtn');
-            if (loadFromClipboardBtn) {
-                 // ... თქვენი ქლიფბორდის ლოგიკა ...
-            }
-        }); 
-        // ⬆️ ყურადღება: აქ იხურება DOMContentLoaded
-
-        // ============================================================
-        // ✅ 2. ეს ფუნქციები უნდა იყოს გარეთ (გლობალურად)
-        // ============================================================
-        
-        function editOperation(id) {
-            console.log("Edit clicked for ID:", id); // კონსოლში გამოჩნდება დაჭერა
-
-            fetch('/Operations/GetOperationForEdit?id=' + id)
-                .then(res => {
-                    if (!res.ok) throw new Error("მონაცემები ვერ მოიძებნა (Check Network Tab)");
-                    return res.json();
-                })
-                .then(data => {
-                    console.log("Received data:", data); // მონაცემების შემოწმება
-
-                    // ველების შევსება
-                    document.getElementById('OperationID').value = data.operationID;
-                    document.getElementById('TransactionDate').value = data.transactionDate;
-                    document.getElementById('Quantity').value = data.quantity;
-                    document.getElementById('DocumentNumber').value = data.documentNumber || '';
-                    
-                    if(document.getElementById('HarvestYear')) 
-                        document.getElementById('HarvestYear').value = data.harvestYear;
-
-                    if(document.getElementById('BeverageID'))
-                         document.getElementById('BeverageID').value = data.beverageID;
-
-                    // ოპერაციის ტიპის არჩევა
-                    const opSelect = document.getElementById('OperationDefID');
-                    if(opSelect) {
-                        opSelect.value = data.operationDefID;
-                        // ტრიგერი, რომ გამოჩნდეს დამატებითი ველები
-                        opSelect.dispatchEvent(new Event('change'));
-                    }
-
-                    // წყარო კასრის ჩატვირთვა (დაყოვნებით)
-                    if (data.sourceBarrelID) {
+            
+            // ----------------------------------------------------
+            // 4. შეცდომის დროს ფორმის აღდგენა
+            // ----------------------------------------------------
+            const formDataJson = @Html.Raw(Json.Serialize(TempData["FormData"]?.ToString() ?? ""));
+            if (formDataJson && formDataJson !== "") {
+                try {
+                    const formData = JSON.parse(formDataJson);
+                    if (formData.OperationDefID) {
+                        opDefSelect.value = formData.OperationDefID;
+                        opDefSelect.dispatchEvent(new Event('change'));
+                        
                         setTimeout(() => {
-                            const srcBarrel = document.getElementById('OppositeBarrelID');
-                            if (srcBarrel) srcBarrel.value = data.sourceBarrelID;
+                            if (formData.TransactionDate) {
+                                transDateInput.value = formData.TransactionDate.split('T')[0];
+                                transDateInput.dispatchEvent(new Event('change'));
+                            }
+                            if (formData.Quantity && document.getElementById('Quantity')) {
+                                document.getElementById('Quantity').value = formData.Quantity;
+                            }
+                            if (formData.DocumentTypeID && documentTypeSelect) {
+                                documentTypeSelect.value = formData.DocumentTypeID;
+                            }
+                            if (formData.DocumentNumber && documentNumberInput) {
+                                documentNumberInput.value = formData.DocumentNumber;
+                            }
+                            
+                            if (formData.OppositeCompanyID && oppCompSelect) {
+                                oppCompSelect.value = formData.OppositeCompanyID;
+                                oppCompSelect.dispatchEvent(new Event('change'));
+                                if (formData.OppositeBarrelID) {
+                                    setTimeout(() => {
+                                        if (oppBarrelSelect) {
+                                            oppBarrelSelect.value = formData.OppositeBarrelID;
+                                            oppBarrelSelect.dispatchEvent(new Event('change'));
+                                        }
+                                    }, 1000);
+                                }
+                            } else if (formData.OppositeBarrelID && oppBarrelSelect) {
+                                setTimeout(() => {
+                                    oppBarrelSelect.value = formData.OppositeBarrelID;
+                                    oppBarrelSelect.dispatchEvent(new Event('change'));
+                                }, 500);
+                            }
                         }, 500);
                     }
+                } catch (error) { console.error('Error restoring form data:', error); }
+            }
 
-                    // ფორმის გადაყვანა EDIT რეჟიმში
-                    const form = document.getElementById('operationForm');
-                    form.action = '/Operations/UpdateOperation';
-
-                    const btn = document.getElementById('AddButton');
-                    btn.innerHTML = '<i class="bi bi-save"></i> შენახვა';
-                    btn.classList.remove('btn-success');
-                    btn.classList.add('btn-warning');
-
-                    // გაუქმების ღილაკი
-                    if (!document.getElementById('btnCancelEdit')) {
-                        const cancelBtn = document.createElement('button');
-                        cancelBtn.type = 'button';
-                        cancelBtn.id = 'btnCancelEdit';
-                        cancelBtn.className = 'btn btn-secondary btn-lg ms-2';
-                        cancelBtn.innerText = 'გაუქმება';
-                        cancelBtn.onclick = resetForm;
-                        btn.parentNode.appendChild(cancelBtn);
-                    }
-                    
-                    // სქროლი ფორმასთან
-                    document.querySelector('.card-header.bg-primary').scrollIntoView({ behavior: 'smooth' });
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("შეცდომა მონაცემების წამოღებისას: " + err.message);
-                });
-        }
-
-        function resetForm() {
-            const form = document.getElementById('operationForm');
-            form.reset();
-            document.getElementById('OperationID').value = "0";
-            
-            // დააბრუნეთ ის Action, რაც თავიდან ეწერა (სავარაუდოდ AddOperation)
-            form.action = '/Operations/AddOperation'; 
-            
-            const btn = document.getElementById('AddButton');
-            btn.innerHTML = '<i class="bi bi-plus-circle-fill me-2"></i> დამატება';
-            btn.classList.remove('btn-warning');
-            btn.classList.add('btn-success');
-            
-            const cancel = document.getElementById('btnCancelEdit');
-            if (cancel) cancel.remove();
-            
-            const opSelect = document.getElementById('OperationDefID');
-            if(opSelect) opSelect.dispatchEvent(new Event('change'));
-        }
+        }); // DOMContentLoaded-ის დასასრული (ახლა უკვე მხოლოდ აქ იხურება)
     </script>
 }
