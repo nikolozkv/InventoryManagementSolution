@@ -98,15 +98,15 @@
             <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
                 <tr>
                     <th style="width: 4%;">ID</th>
-                    <th style="width: 21%;">სასმელის სახელი</th>
+                    <th style="width: 20%;">სასმელის სახელი</th>
                     <th style="width: 7%;">ტიპი</th>
                     <th style="width: 7%;">კატეგორია</th>
                     <th style="width: 8%;">ფერი</th>
-                    <th style="width: 13%;">შაქრიანობა</th>
-                    <th style="width: 10%; text-align: right;">ნაშთი</th>
-                    <th style="width: 5%;">წელი</th>
-                    <th style="width: 7%;">წელი %</th>
-                    <th style="width: 8%;">სუფთა %</th>
+                    <th style="width: 12%;">შაქრიანობა</th>
+                    <th style="width: 11%; text-align: right;">ნაშთი</th>
+                    <th style="width: 5%; text-align: right;">წელი</th>
+                    <th style="width: 8%; text-align: right;">წელი %</th>
+                    <th style="width: 8%; text-align: right;">სუფთა %</th>
                     <th style="width: 10%;">ქმედება</th> @* Adjusted width for button and text-center for consistency *@
                 </tr>
             </thead>
@@ -121,21 +121,23 @@
                         <td>@barrel.Color</td>
                         <td>@barrel.Sweetness</td>
                         <td style="text-align: right;">@barrel.CurrentVolume.ToString("N2", numberFormatInfo)</td>
-                        <td>@barrel.Year</td>
-                        <td>@barrel.YearPercentage</td>
-                        <td>@barrel.PurePercentage</td>
+                        <td style="text-align: right;">@barrel.Year</td>
+                        <td style="text-align: right;">@barrel.YearPercentage</td>
+                        <td style="text-align: right;">@barrel.PurePercentage</td>
                         <td class="d-flex justify-content-start gap-2">
-
-                            <a asp-controller="Operations" asp-action="Index" asp-route-barrelId="@barrel.BarrelID"
-                               class="btn btn-outline-success btn-sm" title="ოპერაციები">
-                                <i class="bi bi-gear-fill"></i> ოპერაცია
-                            </a>
-                            @if (barrel.IsDeletable)  @* თუ მხოლოდ ადმინისტრატორისთვის გვინდა მაშინ ასე: @if (User.IsInRole("Admin") && barrel.IsDeletable) *@
-                            {
-                                <a asp-action="Edit" asp-route-id="@barrel.BarrelID"
-                                   class="btn btn-warning btn-sm ms-2" title="რედაქტირება">
-                                    <i class="bi bi-pencil-fill"></i> </a>
-                            }
+                            <div class="d-flex justify-content-center gap-1">
+                                    <a asp-controller="Operations" asp-action="Index" asp-route-barrelId="@barrel.BarrelID"
+                                       class="btn btn-outline-success btn-sm" title="ოპერაციები">
+                                        <i class="bi bi-gear-fill"></i> ოპერაცია
+                                    </a>
+                                @if (barrel.IsDeletable)  @* თუ მხოლოდ ადმინისტრატორისთვის გვინდა მაშინ ასე: @if (User.IsInRole("Admin") && barrel.IsDeletable) *@
+                                {
+                                    <a asp-action="Edit" asp-route-id="@barrel.BarrelID"
+                                       class="btn btn-warning btn-sm ms-2" title="რედაქტირება">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+                                }
+                            </div>
                         </td>
                     </tr>
                 }

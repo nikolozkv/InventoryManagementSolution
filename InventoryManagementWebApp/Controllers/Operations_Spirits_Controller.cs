@@ -25,6 +25,9 @@ namespace InventoryManagementWebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(int barrelId)
         {
+            // ✅ პირდაპირ ვაფიქსირებთ სპირტის ფერს
+            ViewBag.CurrentThemeColor = "#e9f2fa";
+
             var barrel = await _context.Barrels
                 .Include(b => b.Company).ThenInclude(c => c.CompanyType)
                 .Include(b => b.Beverage).ThenInclude(bv => bv.ProductType)
@@ -37,19 +40,25 @@ namespace InventoryManagementWebApp.Controllers
             if (barrel == null)
                 return NotFound("სპირტის კასრი ვერ მოიძებნა.");
 
-            // ✅ რადგან სპირტის კონტროლერში ვართ, BitMask ყოველთვის არის 4
-            int productBitValue = 4;
+            // ვიღებთ სასმელის BitValue-ს (სპირტისთვის იქნება 4)
+            // თუ რატომღაც ცარიელია, 0-ით დავაზღვევთ რომ ერორი არ ამოაგდოს
+            // int productBitValue = 4; // ტესტისთვის, რომ დარწმუნდე ფილტრი მუშაობს. რეალურად უნდა იყოს სასმელის BitValue 
+            // int productBitValue = barrel.ProductTypeBitValue is int pbv ? pbv : 0;
 
             // 1. DropDown-ისთვის განკუთვნილი სია
+            // ✅ OperationDefinition ვიღებთ ბიტს კატეგორიიდან და არა პროდუქტის ტიპიდან
+            int categoryBitValue = barrel.Beverage?.Category?.BitValue ?? 0;
+
+            // 2. DropDown-ის სია (უკვე შეცვლილი გაქვს)
             ViewBag.OperationDefinitions = await _context.OperationDefinitions
-                .Where(o => o.IsActive == true && (o.TypeCodeMask & productBitValue) > 0)
+                .Where(o => o.IsActive == true && (o.TypeCodeMask & categoryBitValue) > 0)
                 .OrderBy(o => o.Position)
                 .Select(o => new SelectListItem { Text = o.Name, Value = o.OperationDefID.ToString() })
                 .ToListAsync();
 
-            // 2. JavaScript-ისთვის განკუთვნილი სრული ობიექტი
+            // 3. 🆕 JavaScript-ის სრული ობიექტი - აქაც categoryBitValue უნდა იყოს!
             ViewBag.OperationDefinitionsFull = await _context.OperationDefinitions
-                .Where(o => o.IsActive == true && (o.TypeCodeMask & productBitValue) > 0)
+                .Where(o => o.IsActive == true && (o.TypeCodeMask & categoryBitValue) > 0)
                 .Select(o => new { o.OperationDefID, o.Name, o.OperType, o.PreserveBarrelState })
                 .ToListAsync();
 
@@ -67,7 +76,7 @@ namespace InventoryManagementWebApp.Controllers
                     .Include(o => o.Beverage).ThenInclude(b => b.Color)
                     .Include(o => o.Beverage).ThenInclude(b => b.Sweetness)
                     .OrderByDescending(o => o.TransactionDate)
-                    .ThenByDescending(o => o.CalcOrder)
+                    .ThenBy(o => o.CalcOrder)
                     .ThenByDescending(o => o.OperationID)
                     .ToListAsync();
 
@@ -278,9 +287,9 @@ namespace InventoryManagementWebApp.Controllers
             return RedirectToAction(nameof(Index), new { barrelId = barrelId.Value });
         }
 
-        // --- API მარშრუტები შეცვლილია /api/spirits-operations/... კონფლიქტის ასარიდებლად ---
+        // --- API მარშრუტები შეცვლილია /api/operations-spirit/... კონფლიქტის ასარიდებლად ---
 
-        [HttpGet("/api/spirits-operations/filtered-companies")]
+        [HttpGet("/api/operations-spirit/filtered-companies")]
         public async Task<IActionResult> GetFilteredCompanies(int barrelId)
         {
             var result = new List<SelectListItem>();
@@ -311,7 +320,7 @@ namespace InventoryManagementWebApp.Controllers
         //1. კასრების ფილტრაციის API(სპირტის ლოგიკით)
         //აქ ვიძახებთ ახალ Spirit_GetFilteredBarrelsForTransfer პროცედურას.
 
-        [HttpGet("/api/operations-spirits/filtered-barrels")]
+        [HttpGet("/api/operations-spirit/filtered-barrels")]
         public async Task<IActionResult> GetFilteredBarrels(int barrelId, int operType, int? companyId)
         {
             var result = new List<SelectListItem>();
@@ -347,14 +356,35 @@ namespace InventoryManagementWebApp.Controllers
         //  რომელიც გვიბრუნებს MaxAllowed(მომავლის ლიმიტი)
         //  და WeightedAvgDate(ასაკი) ველებს.
 
-        [HttpGet("/api/operations-spirits/get-data-by-transdate")]
+        [HttpGet("/api/operations-spirit/get-data-by-transdate")]
         public async Task<IActionResult> GetDataByTransDate(int operType, int barrelId, int? oppositeBarrelId, DateTime transactionDate)
         {
             int workBarrelId = operType == 1 ? barrelId : oppositeBarrelId ?? 0;
-            if (workBarrelId == 0)
-                return Json(new { volume = 0, maxAllowed = 0 });
 
-            // ცვლადები სპირტისთვის
+            // --- აი ეს ბლოკი შეცვალე ასე: ---
+            if (workBarrelId == 0)
+            {
+                return Json(new
+                {
+                    beverageId = 0,
+                    beverageName = "",
+                    productType = "",
+                    category = "",
+                    color = "",
+                    sweetness = "",
+                    volume = 0,
+                    maxAllowed = 0,
+                    harvestYear = "",
+                    weightedAvgDate = "",
+                    purePercent = 0,
+                    yearLimit = -1,
+                    pureLimit = -1,
+                    allowMix = false
+                });
+            }
+            // --------------------------------
+
+            // ცვლადების ინიციალიზაცია (აქედან კოდი უცვლელია...)
             int beverageId = 0;
             string beverageName = "";
             string productType = "";
@@ -362,17 +392,16 @@ namespace InventoryManagementWebApp.Controllers
             string color = "";
             string sweetness = "";
             decimal volume = 0;
-            decimal maxAllowed = 0; // ✅ ახალი: რეალური დასაშვები ნაშთი
-            string harvestYear = ""; // ✅ შეიძლება იყოს სპირტის ასაკი ან ღვინის წელი
+            decimal maxAllowed = 0;
+            string harvestYear = "";
             string weightedAvgDate = "";
             decimal purePercent = 0;
-
             decimal yearLimit = -1;
             decimal pureLimit = -1;
             bool allowMix = true;
 
             using (var conn = _context.Database.GetDbConnection() as SqlConnection)
-            using (var cmd = new SqlCommand("Spirit_Get_Data_By_TransDate", conn)) // ✅ ახალი პროცედურა
+            using (var cmd = new SqlCommand("Spirit_Get_Data_By_TransDate", conn))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@TargetBarrelID", barrelId);
@@ -392,7 +421,7 @@ namespace InventoryManagementWebApp.Controllers
                         color = reader["Color"]?.ToString() ?? "";
                         sweetness = reader["Sweetness"]?.ToString() ?? "";
                         volume = Convert.ToDecimal(reader["Volume"]);
-                        maxAllowed = Convert.ToDecimal(reader["MaxAllowed"]); // ✅ ვკითხულობთ ლიმიტს
+                        maxAllowed = Convert.ToDecimal(reader["MaxAllowed"]);
 
                         harvestYear = reader["HarvestYear"]?.ToString() ?? "";
                         weightedAvgDate = reader["WeightedAvgDate"] != DBNull.Value ? Convert.ToDateTime(reader["WeightedAvgDate"]).ToString("yyyy-MM-dd") : "";
@@ -413,7 +442,7 @@ namespace InventoryManagementWebApp.Controllers
                 color,
                 sweetness,
                 volume,
-                maxAllowed, // ✅ ვაწვდით ფრონტ-ენდს
+                maxAllowed,
                 harvestYear,
                 weightedAvgDate,
                 purePercent,
@@ -423,7 +452,7 @@ namespace InventoryManagementWebApp.Controllers
             });
         }
 
-        [HttpGet("/api/spirits-operations/document-types")]
+        [HttpGet("/api/operations-spirit/document-types")]
         [AllowAnonymous]
         public async Task<IActionResult> GetDocumentTypes()
         {

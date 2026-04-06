@@ -27,6 +27,9 @@ namespace InventoryManagementWebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(int barrelId)
         {
+            // ✅ პირდაპირ ვაფიქსირებთ ღვინის ფერს
+            ViewBag.CurrentThemeColor = "#ece9e6";
+
             var barrel = await _context.Barrels
                 .Include(b => b.Company).ThenInclude(c => c.CompanyType)
                 .Include(b => b.Beverage).ThenInclude(bv => bv.ProductType)
@@ -39,21 +42,25 @@ namespace InventoryManagementWebApp.Controllers
             if (barrel == null)
                 return NotFound("კასრი ვერ მოიძებნა.");
 
-            // ვიღებთ სასმელის BitValue-ს (სპირტისთვის იქნება 4)
+            // ვიღებთ სასმელის BitValue-ს (ღვინისთვის იქნება 11=1+2+8)
             // თუ რატომღაც ცარიელია, 0-ით დავაზღვევთ რომ ერორი არ ამოაგდოს
             // int productBitValue = 11; // ტესტისთვის, რომ დარწმუნდე ფილტრი მუშაობს. რეალურად უნდა იყოს სასმელის BitValue 
-            int productBitValue = barrel.ProductTypeBitValue is int pbv ? pbv : 0;
+            // int productBitValue = barrel.ProductTypeBitValue is int pbv ? pbv : 0;
 
             // 1. DropDown-ისთვის განკუთვნილი სია
+            // ✅ OperationDefinition ვიღებთ ბიტს კატეგორიიდან და არა პროდუქტის ტიპიდან
+            int categoryBitValue = barrel.Beverage?.Category?.BitValue ?? 0;
+
+            // 2. DropDown-ის სია (უკვე შეცვლილი გაქვს)
             ViewBag.OperationDefinitions = await _context.OperationDefinitions
-                .Where(o => o.IsActive == true && (o.TypeCodeMask & productBitValue) > 0) // ✅ Bitwise ფილტრი
-                .OrderBy(o => o.Position) // ✅ რადგან Position დაამატე, აუცილებლად დავასორტიროთ!
+                .Where(o => o.IsActive == true && (o.TypeCodeMask & categoryBitValue) > 0)
+                .OrderBy(o => o.Position)
                 .Select(o => new SelectListItem { Text = o.Name, Value = o.OperationDefID.ToString() })
                 .ToListAsync();
 
-            // 2. JavaScript-ისთვის განკუთვნილი სრული ობიექტი
+            // 3. 🆕 JavaScript-ის სრული ობიექტი - აქაც categoryBitValue უნდა იყოს!
             ViewBag.OperationDefinitionsFull = await _context.OperationDefinitions
-                .Where(o => o.IsActive == true && (o.TypeCodeMask & productBitValue) > 0) // ✅ იგივე ფილტრი
+                .Where(o => o.IsActive == true && (o.TypeCodeMask & categoryBitValue) > 0)
                 .Select(o => new { o.OperationDefID, o.Name, o.OperType, o.PreserveBarrelState })
                 .ToListAsync();
 
@@ -79,7 +86,7 @@ namespace InventoryManagementWebApp.Controllers
                 .Include(o => o.Beverage).ThenInclude(b => b.Color)
                 .Include(o => o.Beverage).ThenInclude(b => b.Sweetness)
                 .OrderByDescending(o => o.TransactionDate)
-                .ThenBy(o => o.Math == "-" ? 0 : 1)
+                .ThenBy(o => o.CalcOrder)
                 .ThenByDescending(o => o.OperationID)
                 .ToListAsync();
 
@@ -307,7 +314,7 @@ namespace InventoryManagementWebApp.Controllers
             return RedirectToAction(nameof(Index), new { barrelId = barrelId.Value });
         }
 
-        [HttpGet("/api/operations/filtered-companies")]
+        [HttpGet("/api/operations-wine/filtered-companies")]
         public async Task<IActionResult> GetFilteredCompanies(int barrelId)
         {
             var result = new List<SelectListItem>();
@@ -335,7 +342,7 @@ namespace InventoryManagementWebApp.Controllers
             return Json(result.Select(x => new { value = x.Value, text = x.Text }));
         }
 
-        [HttpGet("/api/operations/filtered-barrels")]
+        [HttpGet("/api/operations-wine/filtered-barrels")]
         public async Task<IActionResult> GetFilteredBarrels(int barrelId, int operType, int? companyId)
         {
             var result = new List<SelectListItem>();
@@ -365,7 +372,7 @@ namespace InventoryManagementWebApp.Controllers
             return Json(result.Select(x => new { value = x.Value, text = x.Text }));
         }
 
-        [HttpGet("/api/operations/get-data-by-transdate")]
+        [HttpGet("/api/operations-wine/get-data-by-transdate")]
         public async Task<IActionResult> GetDataByTransDate(int operType, int barrelId, int? oppositeBarrelId, DateTime transactionDate)
         {
             int workBarrelId = operType == 1 ? barrelId : oppositeBarrelId ?? 0;
@@ -442,7 +449,7 @@ namespace InventoryManagementWebApp.Controllers
             });
         }
 
-        [HttpGet("/api/operations/document-types")]
+        [HttpGet("/api/operations-wine/document-types")]
         [AllowAnonymous]
         public async Task<IActionResult> GetDocumentTypes()
         {

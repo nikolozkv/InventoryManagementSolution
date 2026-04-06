@@ -12,6 +12,7 @@ namespace InventoryManagementWebApp.Models
         public string Name { get; set; } = string.Empty;
         public int TypeCodeMask { get; set; } // დაემატა
         public int Position { get; set; }     // დაემატა
-        public string? Note { get; set; }
+        public string? Note { get; set; }     // დაემატა
+        public int BitValue { get; set; }     // დაემატა
     }
 }

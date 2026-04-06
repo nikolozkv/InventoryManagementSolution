@@ -1,0 +1,222 @@
+﻿@model InventoryManagementWebApp.Models.CompanyBarrelDetailsViewModel
+
+@{
+    ViewData["Title"] = "🏭 კომპანიის სპირტის კასრები";
+}
+
+@{
+    var numberFormatInfo = new System.Globalization.NumberFormatInfo
+    {
+        NumberGroupSeparator = " ",
+        NumberDecimalSeparator = "."
+    };
+
+    // ასაკის გამოსათვლელი ფუნქცია
+    string GetAgeString(DateTime? date)
+    {
+        if (!date.HasValue) return "---";
+        var now = DateTime.Now;
+        var years = now.Year - date.Value.Year;
+        var months = now.Month - date.Value.Month;
+        if (now.Day < date.Value.Day) months--;
+        if (months < 0) { years--; months += 12; }
+        if (years == 0 && months == 0) return "ახალი";
+        return (years > 0 ? years + " წ. " : "") + (months > 0 ? months + " თვ." : "");
+    }
+}
+
+<div class="main-container">
+    <div class="summary-card">
+        <h1 class="main-title">@ViewData["Title"] - @Model.CompanyType @Model.CompanyName</h1>
+        <span class="summary-value">( ლოტი: @Model.CompanyLot</span>
+        <span class="summary-value">ID კოდი: @Model.IdentifierCode )</span>
+    </div>
+
+    <form method="get" action="@Url.Action("Index", "CompanyBarrelSpiritDetails", new { companyId = Model.CompanyID })"
+          class="search-form-container d-flex align-items-center flex-wrap gap-2">
+
+        <input type="hidden" name="companyId" value="@Model.CompanyID" />
+
+        <input type="text" name="search1"
+               placeholder="ძიება სასმელის სახელით..."
+               class="form-control"
+               style="max-width: 250px;"
+               value="@Context.Request.Query["search1"]" />
+
+        <input type="text" name="search2"
+               placeholder="ძიება კატეგორიით..."
+               class="form-control"
+               style="max-width: 250px;"
+               value="@Context.Request.Query["search2"]" />
+
+        <button type="submit" class="btn btn-primary">🔍 ძებნა</button>
+        <a href="@Url.Action("Index", "CompanyBarrelSpiritDetails", new { companyId = Model.CompanyID })" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
+
+        <div class="vr mx-5"></div>
+
+        @* 1. ახალი სპირტის კასრი *@
+        <a asp-controller="CompanyBarrelSpiritDetails" asp-action="Create" asp-route-companyId="@Model.CompanyID"
+               class="btn btn-success">
+            ➕ ახალი სპირტის კასრი
+        </a>
+
+        <div class="vr mx-2"></div>
+
+        @* 2. არქივი *@
+        <a asp-action="Archive" asp-route-companyId="@Model.CompanyID" class="btn btn-warning text-dark">
+            <i class="bi bi-archive-fill me-1"></i> არქივი
+        </a>
+
+        <a asp-controller="CompanyBarrels" asp-action="Index" class="btn btn-secondary ms-auto">
+            🔙 უკან
+        </a>
+    </form>
+
+    <div class="summary-card">
+        <div class="summary-item">
+            <span class="summary-value" title="აქტიური კასრები">
+                <i class="bi bi-box-seam summary-icon"></i>აქტიური: @Model.Barrels.Count
+            </span>
+        </div>
+
+        <div class="summary-item">
+            <span class="summary-value text-muted" title="არქივში არსებული კასრები">
+                <i class="bi bi-archive summary-icon text-secondary"></i>არქივში: @Model.ArchivedBarrelsCount
+            </span>
+        </div>
+
+        <div class="summary-item">
+            <span class="summary-value">
+                <i class="bi bi-droplet-half summary-icon"></i>მარაგი: @Model.Barrels.Sum(b => b.CurrentVolume).ToString("N2", numberFormatInfo) ლ
+            </span>
+        </div>
+    </div>
+
+    <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+        <table class="table table-striped company-barrel-details-table">
+            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                <tr>
+                    <th style="width: 5%;">ID</th>
+                    <th style="width: 18%;">სასმელის სახელი</th>
+                    <th style="width: 7%;">ტიპი</th>
+                    <th style="width: 20%;">კატეგორია</th>
+                    <th style="width: 10%;">ფერი</th>
+                    <th style="width: 10%; text-align: center;">ალკოჰოლი %</th>
+                    <th style="width: 10%; text-align: center;">ასაკი</th>
+                    <th style="width: 10%; text-align: right;">ნაშთი (ლ)</th>
+                    <th style="width: 10%; text-align: center;">ქმედება</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var barrel in Model.Barrels)
+                {
+                    <tr>
+                        <td>@barrel.BarrelID</td>
+                        <td>@barrel.BeverageName</td>
+                        <td>@barrel.ProductType</td>
+                        <td>@barrel.Category</td>
+                        <td>@barrel.Color</td>
+                        <td style="text-align: center;">
+                            <span class="badge bg-info text-dark">
+                                @(barrel.CurrentAlcPercent > 0 ? barrel.CurrentAlcPercent.ToString("F1") + "%" : "---")
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="badge bg-warning text-dark">
+                                @GetAgeString(barrel.WeightedAvgDate)
+                            </span>
+                        </td>
+                        <td style="text-align: right; font-weight: bold;">@barrel.CurrentVolume.ToString("N2", numberFormatInfo)</td>
+                        <td class="d-flex justify-content-start gap-2">
+                            <div class="d-flex justify-content-center gap-1">
+                                @* ოპერაციები - გადამისამართება სპირტის ოპერაციებზე *@
+                                    <a asp-controller="Operations_Spirits" asp-action="Index" asp-route-barrelId="@barrel.BarrelID"
+                                           class="btn btn-outline-success btn-sm" title="ოპერაციები">
+                                        <i class="bi bi-gear-fill"></i> ოპერაცია
+                                    </a>
+                                @if (barrel.IsDeletable)  @* თუ მხოლოდ ადმინისტრატორისთვის გვინდა მაშინ ასე: @if (User.IsInRole("Admin") && barrel.IsDeletable) *@
+                                {
+                                    <a asp-action="Edit" asp-route-id="@barrel.BarrelID"
+                                           class="btn btn-warning btn-sm ms-2" title="რედაქტირება">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        (function () {
+        var successMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["SuccessMessage"]));
+        var errorMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ErrorMessage"]));
+
+        if (successMessage) {
+        Swal.fire({ icon: 'success', title: 'წარმატება', text: successMessage, confirmButtonText: 'OK' });
+        }
+        if (errorMessage) {
+        Swal.fire({ icon: 'error', title: 'შეცდომა', text: errorMessage, confirmButtonText: 'გასაგებია' });
+        }
+        })();
+    </script>
+
+    <style>
+        /* ფონი - ცივი ცისფერი სპირტისთვის */
+        body {
+        background-color: #e9f2fa;
+        }
+
+        .main-container {
+        padding: 20px;
+        }
+
+        .summary-card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 10px 30px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border-left: 5px solid #0d6efd;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 50px;
+        align-items: center;
+        }
+
+        .summary-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #212529;
+        }
+
+        .summary-icon {
+        color: #0d6efd;
+        margin-right: 8px;
+        font-size: 1.1rem;
+        }
+
+        .search-form-container {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .company-barrel-details-table {
+        background: white;
+        }
+
+        /* ცხრილის ჰედერი იყოს წებოვანი */
+        .table-responsive thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        }
+    </style>
+}

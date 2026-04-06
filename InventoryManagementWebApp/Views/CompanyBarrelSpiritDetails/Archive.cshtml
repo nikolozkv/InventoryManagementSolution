@@ -10,6 +10,19 @@
         NumberGroupSeparator = " ",
         NumberDecimalSeparator = "."
     };
+
+    // ასაკის გამოსათვლელი ფუნქცია
+    string GetAgeString(DateTime? date)
+    {
+        if (!date.HasValue) return "---";
+        var now = DateTime.Now;
+        var years = now.Year - date.Value.Year;
+        var months = now.Month - date.Value.Month;
+        if (now.Day < date.Value.Day) months--;
+        if (months < 0) { years--; months += 12; }
+        if (years == 0 && months == 0) return "ახალი";
+        return (years > 0 ? years + " წ. " : "") + (months > 0 ? months + " თვ." : "");
+    }
 }
 
 <div class="main-container">
@@ -19,7 +32,7 @@
         <span class="summary-value">ID კოდი: @Model.IdentifierCode )</span>
     </div>
 
-    <form method="get" action="@Url.Action("Archive", "CompanyBarrelDetails", new { companyId = Model.CompanyID })"
+    <form method="get" action="@Url.Action("Archive", "CompanyBarrelSpiritDetails", new { companyId = Model.CompanyID })"
           class="search-form-container d-flex align-items-center flex-wrap gap-2 mb-3">
 
         <input type="hidden" name="companyId" value="@Model.CompanyID" />
@@ -38,7 +51,7 @@
 
         <button type="submit" class="btn btn-primary">🔍 ძებნა</button>
 
-        <a href="@Url.Action("Archive", "CompanyBarrelDetails", new { companyId = Model.CompanyID })" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
+        <a href="@Url.Action("Archive", "CompanyBarrelSpiritDetails", new { companyId = Model.CompanyID })" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
 
         <div class="vr mx-2"></div>
 
@@ -72,14 +85,13 @@
             <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
                 <tr>
                     <th style="width: 5%;">ID</th>
-                    <th style="width: 20%;">სასმელის სახელი</th>
-                    <th style="width: 8%;">ტიპი</th>
-                    <th style="width: 8%;">კატეგორია</th>
-                    <th style="width: 8%;">ფერი</th>
-                    <th style="width: 14%;">შაქრიანობა</th>
-                    <th style="width: 11%; text-align: right;">ნაშთი</th>
-                    <th style="width: 7%; text-align: right;">წელი</th>
-                    <th style="width: 9%;">სტატუსი</th>
+                    <th style="width: 18%;">სასმელის სახელი</th>
+                    <th style="width: 7%;">ტიპი</th>
+                    <th style="width: 20%;">კატეგორია</th>
+                    <th style="width: 10%;">ფერი</th>
+                    <th style="width: 10%; text-align: center;">ალკოჰოლი %</th>
+                    <th style="width: 10%; text-align: center;">ასაკი</th>
+                    <th style="width: 10%; text-align: right;">ნაშთი (ლ)</th>
                     <th style="width: 10%; text-align: center;">ქმედება</th>
                 </tr>
             </thead>
@@ -94,9 +106,17 @@
                             <td>@barrel.ProductType</td>
                             <td>@barrel.Category</td>
                             <td>@barrel.Color</td>
-                            <td>@barrel.Sweetness</td>
-                            <td style="text-align: right;">@barrel.CurrentVolume.ToString("N2", numberFormatInfo)</td>
-                            <td style="text-align: right;">@(barrel.Year == 0 ? "-" : barrel.Year.ToString())</td>
+                            <td style="text-align: center;">
+                                <span class="badge bg-info text-dark">
+                                    @(barrel.CurrentAlcPercent > 0 ? barrel.CurrentAlcPercent.ToString("F1") + "%" : "---")
+                                </span>
+                            </td>
+                            <td style="text-align: center;">
+                                <span class="badge bg-warning text-dark">
+                                    @GetAgeString(barrel.WeightedAvgDate)
+                                </span>
+                            </td>
+                            <td style="text-align: right; font-weight: bold;">@barrel.CurrentVolume.ToString("N2", numberFormatInfo)</td>
 
                             <td>
                                 @if (barrel.IsActive)

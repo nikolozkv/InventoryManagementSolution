@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Security.Claims; // საჭიროა Claim-ების წასაკითხად
+using System.Security.Claims;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Spreadsheet;
 using InventoryManagementWebApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,11 +16,11 @@ using Microsoft.EntityFrameworkCore;
 namespace InventoryManagementWebApp.Controllers
 {
     [Authorize]
-    public class CompanyBarrelDetailsController : Controller
+    public class CompanyBarrelSpiritDetailsController : Controller
     {
         private readonly InventoryContext _context;
 
-        public CompanyBarrelDetailsController(InventoryContext context)
+        public CompanyBarrelSpiritDetailsController(InventoryContext context)
         {
             _context = context;
         }
@@ -65,11 +67,11 @@ namespace InventoryManagementWebApp.Controllers
 
             if (company == null) return NotFound("კომპანია ვერ მოიძებნა!");
 
-            // ვიღებთ მიმდინარე სამუშაო ნიღაბს
+            // ვიღებთ მიმდინარე სამუშაო ნიღაბს (სპირტის გვერდზე ეს იქნება სპირტის ბიტი)
             int workingMask = GetWorkingMask();
 
             var pId = new SqlParameter("@CompanyID", companyId);
-            var pMask = new SqlParameter("@ProductTypeMask", workingMask); // ახალი პარამეტრი
+            var pMask = new SqlParameter("@ProductTypeMask", workingMask);
             var p1 = new SqlParameter("@Search1", search1 ?? (object)DBNull.Value);
             var p2 = new SqlParameter("@Search2", search2 ?? (object)DBNull.Value);
 
@@ -98,7 +100,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         // ==========================================
-        // CREATE (POST)
+        // CREATE (GET)
         // ==========================================
         [HttpGet]
         public async Task<IActionResult> Create(int companyId)
@@ -107,15 +109,19 @@ namespace InventoryManagementWebApp.Controllers
             if (company == null) return NotFound("კომპანია ვერ მოიძებნა!");
 
             int workingMask = GetWorkingMask();
-            await PopulateDropDowns(workingMask); // ვაწვდით ნიღაბს
+            await PopulateDropDowns(workingMask);
 
             var newBarrel = new Barrel
             {
                 CompanyID = companyId,
-                Year = DateTime.Now.Month < 11 ? DateTime.Now.Year - 1 : DateTime.Now.Year
+                Year = DateTime.Now.Year // მიმდინარე წელი როგორც ნაგულისხმევი მნიშვნელობა
             };
             return View(newBarrel);
         }
+
+        // ==========================================
+        // CREATE (POS)
+        // ==========================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -124,25 +130,9 @@ namespace InventoryManagementWebApp.Controllers
             int userId = GetCurrentUserId();
             int workingMask = GetWorkingMask();
 
-            if (barrel.Year == null) barrel.Year = 0;
+            barrel.Year = DateTime.Now.Year; // მიმდინარე წელი როგორც ნაგულისხმევი მნიშვნელობა
 
-            var existing = await _context.Barrels
-                .AsNoTracking()
-                .Where(b => b.CompanyID == barrel.CompanyID && b.BeverageID == barrel.BeverageID && b.Year == barrel.Year)
-                .Select(b => new { b.BarrelID, b.IsActive })
-                .FirstOrDefaultAsync();
-
-            if (existing != null)
-            {
-                if (existing.IsActive) ViewBag.ErrorMessage = "აქტიური კასრი ამ პარამეტრებით უკვე არსებობს!";
-                else
-                {
-                    ViewBag.ErrorMessage = "კასრი ნაპოვნია არქივში.";
-                    ViewBag.PassiveBarrelID = existing.BarrelID;
-                }
-                await PopulateDropDowns(workingMask);
-                return View(barrel);
-            }
+            // --- დუბლიკატზე შემოწმების ბლოკი სრულად ამოღებულია ---
 
             try
             {
@@ -153,10 +143,11 @@ namespace InventoryManagementWebApp.Controllers
                     new SqlParameter("@CompanyID", barrel.CompanyID),
                     new SqlParameter("@BeverageID", barrel.BeverageID),
                     new SqlParameter("@Year", barrel.Year),
+                    // TODO: აქ სასურველია რეალური UserID-ის წამოღება (ახლა ხისტად 1 წერია)
                     new SqlParameter("@CreatedByUserID", userId),
                     pNewId);
 
-                TempData["SuccessMessage"] = "კასრი წარმატებით შეიქმნა. ID: " + pNewId.Value;
+                TempData["SuccessMessage"] = "სპირტის კასრი წარმატებით შეიქმნა. ID: " + pNewId.Value;
                 return RedirectToAction("Index", new { companyId = barrel.CompanyID });
             }
             catch (SqlException ex)
@@ -168,7 +159,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         // ==========================================
-        // EDIT (POST)
+        // EDIT (GET)
         // ==========================================
         [HttpGet]
         public async Task<IActionResult> Edit(int? id)
@@ -185,6 +176,10 @@ namespace InventoryManagementWebApp.Controllers
             return View(barrel);
         }
 
+        // ==========================================
+        // EDIT (POST)
+        // ==========================================
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Barrel barrel)
@@ -194,29 +189,7 @@ namespace InventoryManagementWebApp.Controllers
             int userId = GetCurrentUserId();
             int workingMask = GetWorkingMask();
 
-            var existing = await _context.Barrels
-                .AsNoTracking()
-                .Where(b => b.CompanyID == barrel.CompanyID &&
-                            b.BeverageID == barrel.BeverageID &&
-                            b.Year == barrel.Year &&
-                            b.BarrelID != barrel.BarrelID)
-                .Select(b => new { b.BarrelID, b.IsActive })
-                .FirstOrDefaultAsync();
-
-            if (existing != null)
-            {
-                if (existing.IsActive)
-                {
-                    ViewBag.ErrorMessage = "ცვლილება დაიბლოკა: აქტიური კასრი ამ პარამეტრებით უკვე არსებობს!";
-                }
-                else
-                {
-                    ViewBag.ErrorMessage = "არჩეული პარამეტრებით კასრი ნაპოვნია არქივში.";
-                    ViewBag.PassiveBarrelID = existing.BarrelID;
-                }
-                await PopulateDropDowns(workingMask);
-                return View(barrel);
-            }
+            // --- დუბლიკატზე შემოწმების ბლოკი სრულად ამოღებულია ---
 
             try
             {
@@ -226,7 +199,7 @@ namespace InventoryManagementWebApp.Controllers
                     "EXEC [dbo].[BarrelBeverageEdit] @BarrelID, @NewBeverageID, @NewYear, @UpdatedByUserID, @Message OUTPUT",
                     new SqlParameter("@BarrelID", barrel.BarrelID),
                     new SqlParameter("@NewBeverageID", barrel.BeverageID),
-                    new SqlParameter("@NewYear", barrel.Year ?? 0),
+                    new SqlParameter("@NewYear", barrel.Year ?? DateTime.Now.Year),
                     new SqlParameter("@UpdatedByUserID", userId),
                     pMessage);
 
@@ -250,6 +223,7 @@ namespace InventoryManagementWebApp.Controllers
             var barrel = await _context.Barrels
             .Include(b => b.Beverage)
             .FirstOrDefaultAsync(b => b.BarrelID == id);
+
             if (barrel == null) return NotFound();
             return View(barrel);
         }
@@ -269,6 +243,7 @@ namespace InventoryManagementWebApp.Controllers
                 b.Year == barrel.Year &&
                 b.IsActive == true &&
                 b.BarrelID != barrel.BarrelID);
+
                 if (activeDuplicateExists)
                 {
                     TempData["ErrorMessage"] = "ვერ ხერხდება გააქტიურება: მსგავსი აქტიური კასრი უკვე არსებობს!";
@@ -278,7 +253,8 @@ namespace InventoryManagementWebApp.Controllers
             barrel.IsActive = newStatus;
             _context.Update(barrel);
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = newStatus ? "კასრი წარმატებით აღდგა!" : "კასრი გადავიდა არქივში.";
+
+            TempData["SuccessMessage"] = newStatus ? "სპირტის კასრი წარმატებით აღდგა!" : "სპირტის კასრი გადავიდა არქივში.";
             return RedirectToAction("Index", new { companyId = barrel.CompanyID });
         }
 
@@ -291,6 +267,7 @@ namespace InventoryManagementWebApp.Controllers
             var barrel = await _context.Barrels
             .Include(b => b.Beverage)
             .FirstOrDefaultAsync(b => b.BarrelID == id);
+
             if (barrel == null) return NotFound();
             return View(barrel);
         }
@@ -301,6 +278,7 @@ namespace InventoryManagementWebApp.Controllers
         {
             var barrel = await _context.Barrels.FindAsync(id);
             if (barrel == null) return NotFound();
+
             int companyId = barrel.CompanyID;
             try
             {
@@ -341,7 +319,6 @@ namespace InventoryManagementWebApp.Controllers
                 .Include(b => b.Beverage.Category)
                 .Include(b => b.Beverage.Color)
                 .Include(b => b.Beverage.Sweetness)
-                // ფილტრაცია დაემატა აქაც!
                 .Where(b => b.CompanyID == companyId && (b.ProductTypeBitValue & workingMask) > 0)
                 .AsQueryable();
 
@@ -391,23 +368,12 @@ namespace InventoryManagementWebApp.Controllers
             var barrel = await _context.Barrels.FindAsync(id);
             if (barrel == null) return NotFound();
 
-            bool duplicate = await _context.Barrels.AnyAsync(b =>
-               b.CompanyID == barrel.CompanyID &&
-               b.BeverageID == barrel.BeverageID &&
-               b.Year == barrel.Year &&
-               b.IsActive == true &&
-               b.BarrelID != barrel.BarrelID);
+            // სპირტის შემთხვევაში პირდაპირ ვააქტიურებთ, შემოწმების გარეშე
+            barrel.IsActive = true;
+            _context.Update(barrel);
+            await _context.SaveChangesAsync();
 
-            if (duplicate)
-            {
-                TempData["ErrorMessage"] = "ვერ ხერხდება გააქტიურება: მსგავსი აქტიური კასრი უკვე არსებობს!";
-            }
-            else
-            {
-                barrel.IsActive = true;
-                _context.Update(barrel);
-                await _context.SaveChangesAsync();
-            }
+            // TempData["SuccessMessage"] = "სპირტის კასრი წარმატებით გააქტიურდა!";
 
             return RedirectToAction(nameof(Archive), new { companyId = barrel.CompanyID, search1, search2 });
         }
@@ -432,30 +398,26 @@ namespace InventoryManagementWebApp.Controllers
         private async Task PopulateDropDowns(int workingMask)
         {
             ViewBag.Beverages = await _context.Beverages
-                // 1. ვფილტრავთ აქტიურობით და სესიის ნიღბით
                 .Where(b => b.IsActive && (b.ProductType.BitValue & workingMask) > 0)
-
-                // 2. მოგვაქვს დაკავშირებული ცხრილები (SubCategory დამატებულია)
                 .Include(b => b.ProductType)
                 .Include(b => b.Category)
                 .Include(b => b.SubCategory)
                 .Include(b => b.Color)
                 .Include(b => b.Sweetness)
-
-                // 3. ვასორტირებთ Position ველების მიხედვით ზუსტი იერარქიით
                 .OrderBy(b => b.ProductType.Position)
                 .ThenBy(b => b.Category.Position)
                 .ThenBy(b => b.SubCategory.Position)
                 .ThenBy(b => b.Color.Position)
                 .ThenBy(b => b.Sweetness.Position)
                 .ThenBy(b => b.Name)
-
                 .ToListAsync();
 
+            // სპირტისთვის შეიძლება წელი იშვიათად იყოს გამოყენებული,
+            // მაგრამ DropDown მაინც გვჭირდება (0 ნიშნავს "წლის გარეშე")
             ViewBag.VintageYears = Enumerable.Range(DateTime.Now.Year - 20, 15)
                 .Reverse()
                 .Select(y => new SelectListItem { Value = y.ToString(), Text = y.ToString() })
-                .Append(new SelectListItem { Value = "0", Text = "წელის გარეშე" })
+                .Append(new SelectListItem { Value = "0", Text = "წლის გარეშე" })
                 .ToList();
         }
     }

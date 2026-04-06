@@ -13,6 +13,7 @@
         public int? Year { get; set; }
         public decimal? YearPercentage { get; set; }
         public decimal? PurePercentage { get; set; }
+        public decimal CurrentAlcPercent { get; set; }
         public bool IsDeletable { get; set; }
         public bool IsActive { get; set; }
 

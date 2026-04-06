@@ -1,4 +1,13 @@
-﻿<!DOCTYPE html>
+﻿@{
+    // 1. ჯერ ვამოწმებთ ViewBag-ს (სწრაფი გადართვისთვის ან გვერდის გადასაფარად)
+    // 2. თუ ცარიელია, ვკითხულობთ ქუქის
+    // 3. თუ ეგეც ცარიელია, ვიღებთ ღვინის ფერს
+    string themeColor = ViewBag.CurrentThemeColor?.ToString()
+                     ?? Context.Request.Cookies["CurrentThemeColor"]
+                     ?? "#ece9e6";
+}
+
+<!DOCTYPE html>
 <html lang="ge">
 
 <head>
@@ -350,7 +359,8 @@
 
 </head>
 
-<body>
+<body style="background-color: @themeColor !important;">
+
     <!-- F1 Clipboard Compact Overlay -->
     <div id="f1ClipboardOverlay" class="f1-clipboard-overlay">
         @* <button type="button" class="f1-close" id="f1CloseBtn">×</button> *@

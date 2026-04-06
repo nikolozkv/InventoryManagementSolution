@@ -36,10 +36,24 @@ namespace InventoryManagementWebApp.Controllers
 
             if (typeMask.HasValue)
             {
-                // თუ იუზერმა მთავარი მენიუდან კონკრეტულ ღილაკს დააჭირა (მაგ: მოვიდა 4 ან 11)
-                workingMask = userMask & typeMask.Value; // უსაფრთხოების ფილტრი
+                // 1. შენი ძველი ლოგიკა (მასკის გამოთვლა)
+                workingMask = userMask & typeMask.Value;
 
-                // ვინახავთ ამ არჩევანს ბრაუზერის Cookie-ში 1 დღით
+                // 2. 🆕 ნაბიჯი 3: ბაზიდან ფერის ამოღება (ამას ვამატებთ)
+                var productType = _context.BeverageProductTypes
+                    .FirstOrDefault(pt => pt.BitValue == typeMask.Value);
+                string themeColor = productType?.ThemeColor ?? "#ece9e6";
+
+                // 3. 🆕 ფერის შენახვა Cookie-ში (ამასაც ვამატებთ)
+                HttpContext.Response.Cookies.Append(
+                    "CurrentThemeColor",
+                    themeColor,
+                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(1) }
+                );
+
+                ViewBag.CurrentThemeColor = themeColor;
+
+                // 4. შენი ძველი ლოგიკა (მასკის შენახვა Cookie-ში)
                 HttpContext.Response.Cookies.Append(
                     "CurrentWorkingMask",
                     workingMask.ToString(),

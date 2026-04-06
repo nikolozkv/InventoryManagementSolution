@@ -56,7 +56,9 @@
                     <td style="text-align: center;width: 10%;">@company.TotalBarrels</td>
                     <td style="text-align: center;width: 15%;">
                         <!-- ღილაკი, რომელიც გადადის Companies-ის დეტალური გვერდზე, სადაც გამოჩნდება შერჩეული კომპანიის მარაგის (კასრების) ჩამონათვალი -->
-                        <a asp-controller="CompanyBarrelDetails" asp-action="Index" asp-route-companyId="@company.CompanyID"
+                        <a asp-controller="CompanyBarrelDetailsDispatcher"
+                            asp-action="Index"
+                            asp-route-companyId="@company.CompanyID"
                            class="btn btn-outline-success">🔍 დეტალურად</a>
                     </td>
                 </tr>

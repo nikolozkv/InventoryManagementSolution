@@ -13,5 +13,6 @@ namespace InventoryManagementWebApp.Models
         public int BitValue { get; set; }
         public int Position { get; set; } // დაემატა
         public string? Note { get; set; }
+        public string? ThemeColor { get; set; }
     }
 }

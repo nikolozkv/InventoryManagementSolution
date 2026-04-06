@@ -146,6 +146,30 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29tcGFueUJhcnJlbERldGFpbHNcU3RhdHVzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Projects/InventoryManagement/InventoryManagementSolution/InventoryManagementWebApp/Views/CompanyBarrelSpiritDetails/Archive.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29tcGFueUJhcnJlbFNwaXJpdERldGFpbHNcQXJjaGl2ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Projects/InventoryManagement/InventoryManagementSolution/InventoryManagementWebApp/Views/CompanyBarrelSpiritDetails/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29tcGFueUJhcnJlbFNwaXJpdERldGFpbHNcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Projects/InventoryManagement/InventoryManagementSolution/InventoryManagementWebApp/Views/CompanyBarrelSpiritDetails/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29tcGFueUJhcnJlbFNwaXJpdERldGFpbHNcRGVsZXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Projects/InventoryManagement/InventoryManagementSolution/InventoryManagementWebApp/Views/CompanyBarrelSpiritDetails/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29tcGFueUJhcnJlbFNwaXJpdERldGFpbHNcRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Projects/InventoryManagement/InventoryManagementSolution/InventoryManagementWebApp/Views/CompanyBarrelSpiritDetails/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29tcGFueUJhcnJlbFNwaXJpdERldGFpbHNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Projects/InventoryManagement/InventoryManagementSolution/InventoryManagementWebApp/Views/CompanyBarrelSpiritDetails/Status.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29tcGFueUJhcnJlbFNwaXJpdERldGFpbHNcU3RhdHVzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Projects/InventoryManagement/InventoryManagementSolution/InventoryManagementWebApp/Views/CompanyBarrels/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29tcGFueUJhcnJlbHNcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

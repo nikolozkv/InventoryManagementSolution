@@ -1,0 +1,54 @@
+﻿@model InventoryManagementWebApp.Models.Barrel
+
+@{
+    ViewData["Title"] = "❌ კასრის წაშლა";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h4 class="alert-heading"><i class="bi bi-x-octagon-fill"></i> შეცდომა!</h4>
+                    <p>@TempData["ErrorMessage"]</p>
+                    <hr>
+                    <p class="mb-0 fs-6">კასრის წაშლა ვერ მოხერხდა. ჯერ გაასუფთავეთ დაკავშირებული ისტორია/ოპერაციები.</p>
+                </div>
+            }
+
+            <div class="card shadow border-0 border-top border-danger border-5">
+                <div class="card-body text-center p-5">
+                    <div class="text-danger mb-4">
+                        <i class="bi bi-trash-fill" style="font-size: 4rem;"></i>
+                    </div>
+                    <h2 class="card-title text-danger mb-3">კასრის წაშლა</h2>
+                    <p class="card-text fs-5 text-muted mb-4">
+                        დარწმუნებული ხართ, რომ გსურთ ამ კასრის სამუდამოდ წაშლა?
+                        <br>
+                        <strong>ეს ქმედება შეუქცევადია!</strong>
+                    </p>
+
+                    <div class="bg-light p-3 rounded mb-4 text-start">
+                        <p class="mb-1"><strong>სასმელი:</strong> @Model.Beverage?.Name</p>
+                        <p class="mb-1"><strong>წელი:</strong> @(Model.Year == 0 ? "უწლოვანო" : Model.Year.ToString())</p>
+                        <p class="mb-0"><strong>მოცულობა:</strong> @Model.CurrentVolume ლიტრი</p>
+                    </div>
+
+                    <form asp-action="Delete">
+                        <input type="hidden" asp-for="BarrelID" />
+                        <div class="d-flex justify-content-center gap-3">
+                            <button type="submit" class="btn btn-danger btn-lg px-4">
+                                <i class="bi bi-trash"></i> კი, წაშალე
+                            </button>
+                            <a asp-action="Edit" asp-route-id="@Model.BarrelID" class="btn btn-secondary btn-lg px-4">
+                                გაუქმება
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
