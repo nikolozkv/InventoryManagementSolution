@@ -60,6 +60,8 @@ namespace InventoryManagementWebApp.Models
         // საშუალო შეწონილი თარიღი (სპირტის ასაკის გამოსათვლელად)
         public DateTime? WeightedAvgDate { get; set; }  // საშუალო თარიღი (ასაკისთვის)
 
+        public decimal? RealPercent { get; set; } // ✅ სასმელის რეალური პროცენტი
+
         // სასმელის ტიპის ბიტური ნიღაბი (BitMask ლოგიკისთვის)
         public int ProductTypeBitValue { get; set; }
     }

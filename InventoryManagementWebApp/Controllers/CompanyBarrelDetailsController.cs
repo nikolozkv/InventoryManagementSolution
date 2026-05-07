@@ -283,44 +283,70 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         // ==========================================
-        // DELETE
+        // DELETE (GET)
         // ==========================================
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
             var barrel = await _context.Barrels
-            .Include(b => b.Beverage)
-            .FirstOrDefaultAsync(b => b.BarrelID == id);
-            if (barrel == null) return NotFound();
+                .Include(b => b.Beverage)
+                .FirstOrDefaultAsync(b => b.BarrelID == id);
+
+            // თუ კასრი ძირითად ბაზაში აღარაა, ავტომატურად გადავიყვანოთ ინდექსზე
+            if (barrel == null)
+            {
+                TempData["ErrorMessage"] = "კასრი ვერ მოიძებნა ან უკვე წაშლილია.";
+                return RedirectToAction(nameof(Index));
+            }
+
             return View(barrel);
         }
 
+        // ==========================================
+        // DELETE CONFIRMED (POST)
+        // ==========================================
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var barrel = await _context.Barrels.FindAsync(id);
-            if (barrel == null) return NotFound();
+            // ვიპოვოთ კასრი, რომ გავიგოთ CompanyID რედირექტისთვის
+            var barrel = await _context.Barrels.AsNoTracking().FirstOrDefaultAsync(x => x.BarrelID == id);
+            if (barrel == null) return RedirectToAction(nameof(Index));
+
             int companyId = barrel.CompanyID;
+            int userId = GetCurrentUserId();
+
+            var barrelIdParam = new SqlParameter("@BarrelID", id);
+            var userIdParam = new SqlParameter("@ExecutedByUserID", userId);
+            var batchIdParam = new SqlParameter("@BatchID", DBNull.Value);
+            var msgParam = new SqlParameter("@Message", SqlDbType.NVarChar, 200) { Direction = ParameterDirection.Output };
+
             try
             {
-                _context.Barrels.Remove(barrel);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "კასრი წარმატებით წაიშალა.";
-            }
-            catch (DbUpdateException ex)
-            {
-                if (ex.InnerException is SqlException sqlEx && sqlEx.Number == 51000)
+                await _context.Database.ExecuteSqlRawAsync(
+                    "EXEC dbo.DeleteBarrel @BarrelID, @ExecutedByUserID, @BatchID, @Message OUTPUT",
+                    barrelIdParam, userIdParam, batchIdParam, msgParam);
+
+                var message = msgParam.Value?.ToString();
+
+                // თუ შეტყობინება დადებითია, ვბრუნდებით სიაში
+                if (message != null && (message.Contains("წარმატებით") || message.Contains("დაარქივდა")))
                 {
-                    TempData["ErrorMessage"] = sqlEx.Message;
+                    TempData["SuccessMessage"] = message;
+                    return RedirectToAction("Index", new { companyId = companyId });
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "წაშლა ვერ მოხერხდა: " + ex.Message;
+                    // თუ ბაზამ რაიმე ვალიდაციის გამო არ წაშალა (მაგ. ისტორია აქვს)
+                    TempData["ErrorMessage"] = message;
+                    return RedirectToAction("Delete", new { id = id });
                 }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "შეცდომა წაშლისას: " + ex.Message;
                 return RedirectToAction("Delete", new { id = id });
             }
-            return RedirectToAction("Index", new { companyId = companyId });
         }
 
         // ==========================================
@@ -353,7 +379,7 @@ namespace InventoryManagementWebApp.Controllers
 
             var barrels = await query
                 .OrderBy(b => b.IsActive)
-                .ThenByDescending(b => b.BarrelID)
+                .ThenBy(b => b.BarrelID)
                 .ToListAsync();
 
             var viewModel = new CompanyBarrelDetailsViewModel
@@ -445,10 +471,12 @@ namespace InventoryManagementWebApp.Controllers
                 // 3. ვასორტირებთ Position ველების მიხედვით ზუსტი იერარქიით
                 .OrderBy(b => b.ProductType.Position)
                 .ThenBy(b => b.Category.Position)
-                .ThenBy(b => b.SubCategory.Position)
-                .ThenBy(b => b.Color.Position)
-                .ThenBy(b => b.Sweetness.Position)
-                .ThenBy(b => b.Name)
+                //.ThenBy(b => b.SubCategory.Position)
+                //.ThenBy(b => b.Color.Position)
+                //.ThenBy(b => b.Sweetness.Position)
+                //.ThenBy(b => b.Name)
+
+                .ThenBy(b => b.BeverageID) // ახალი დალაგება მხოლოდ ID-ის მიხედვით, რომ არ ირღვეს კასრების დალაგების ლოგიკა
 
                 .ToListAsync();
 

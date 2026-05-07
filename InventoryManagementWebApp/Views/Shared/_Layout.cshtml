@@ -36,7 +36,7 @@
             --button-size: 30px; /* Width and height of the button */
             --button-margin: 15px; /* Margin from screen edge when closed */
             --button-offset-from-sidebar-edge: 15px; /* How far button is from sidebar's right edge */
-            --header-height: 60px; /* Approximate height of your navbar, adjust as needed */
+            --header-height: 30px; /* Top offset for fixed header / content (was 60px; halved to tighten top gap) */
             /* Calculate full width the button occupies for positioning */
             --button-full-width: calc(var(--button-size) + var(--button-offset-from-sidebar-edge));
         }
@@ -370,7 +370,7 @@
                 <option value="">აირჩიეთ საბუთის ტიპი</option>
             </select>
             
-            <input type="text" id="f1ClipboardNumber" class="f1-control f1-input" placeholder="ნომერი" maxlength="50">
+            <input type="text" id="f1ClipboardNumber" class="f1-control f1-input" placeholder="ნომერი" maxlength="500">
             
             <input type="date" id="f1ClipboardDate" class="f1-control f1-date" max="@DateTime.Now.ToString("yyyy-MM-dd")">
             
@@ -426,7 +426,7 @@
     </div>
 
     <!-- The main content area, now with ID for JS/CSS -->
-    <div id="mainContent" class="container-fluid container-fluid-90">
+    <div id="mainContent" class="container-fluid container-fluid-95">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
@@ -1087,7 +1087,7 @@
     </script>
 
     @* მიმდინარე ვერსიის ნომერი *@
-    <div class="app-version">V 26.02.15</div>
+    <div class="app-version">V 26.04.28</div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>

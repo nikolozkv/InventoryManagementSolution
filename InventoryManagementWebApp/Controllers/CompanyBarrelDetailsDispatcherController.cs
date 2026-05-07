@@ -14,8 +14,8 @@ namespace InventoryManagementWebApp.Controllers
             }
 
             // 2. დისპეტჩერის ლოგიკა:
-            // თუ ნიღაბში არის სპირტი (ბიტი 4)
-            if ((workingMask & 4) > 0)
+            // თუ ნიღაბში არის სპირტი (ბიტი 4 + 16)
+            if ((workingMask & 20) > 0)
             {
                 return RedirectToAction("Index", "CompanyBarrelSpiritDetails", new { companyId = companyId });
             }

@@ -18,12 +18,12 @@ namespace InventoryManagementWebApp.Models
 
         public int OperationDefID { get; set; }
 
-        [MaxLength(50)]
+        [MaxLength(500)]
         public string? DocumentNumber { get; set; }
 
         public int BeverageID { get; set; }
 
-        public int HarvestYear { get; set; }
+        public int HarvestYear { get; set; } // მოსავლის წელი
 
         [Column(TypeName = "decimal(10,2)")]
         public decimal Quantity { get; set; }
@@ -75,5 +75,7 @@ namespace InventoryManagementWebApp.Models
 
         [ForeignKey("BeverageID")]
         public virtual Beverage Beverage { get; set; } = null!;
+        public DateTime? WeightedAvgDate { get; internal set; }
+        public DateTime? IncomingAvgDate { get; internal set; }
     }
 }

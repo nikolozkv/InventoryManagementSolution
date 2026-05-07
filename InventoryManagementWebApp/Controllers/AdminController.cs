@@ -56,10 +56,11 @@ namespace InventoryManagementWebApp.Controllers
                     IsActive = (bool)reader["IsActive"],
                     IsAdmin = (bool)reader["IsAdmin"],
                     AllowedProductsMask = mask,
-                    CanAccessWine = (mask & 1) != 0,
-                    CanAccessSparkling = (mask & 2) != 0,
-                    CanAccessSpirit = (mask & 4) != 0,
-                    CanAccessWineBased = (mask & 8) != 0
+                    // ✅ 11 ნიშნავს ღვინოს (1+2+8)
+                    CanAccessWine = (mask & 11) != 0,
+                    // ✅ 20 ნიშნავს სპირტს (4+16)
+                    CanAccessSpirit = (mask & 20) != 0,
+                    // Sparkling და WineBased აღარ გვჭირდება ცალკე, რადგან Wine-ში შედის
                 });
             }
 
@@ -80,21 +81,16 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         // POST: /Admin/EditUser
-        // POST: /Admin/EditUser
         [HttpPost]
         public IActionResult EditUser(UserModel model)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
+            if (!ModelState.IsValid) return View(model);
 
-            model.AllowedProductsMask = CalculateProductsMask(
-                    model.CanAccessWine,
-                    model.CanAccessSparkling,
-                    model.CanAccessSpirit,
-                    model.CanAccessWineBased
-                );
+            // 1. ვანგარიშობთ ნიღაბს (11 ღვინისთვის, 20 სპირტისთვის)
+            int mask = CalculateProductsMask(model.CanAccessWine, model.CanAccessSpirit);
+
+            // მოდელს უნდა მივანიჭოთ გამოთვლილი მნიშვნელობა
+            model.AllowedProductsMask = mask;
 
             // ვამოწმებთ, ვინ არის შემოსული და ვის პროფილს არედაქტირებს
             var currentUserName = User.FindFirst(ClaimTypes.Name)?.Value;
@@ -145,7 +141,7 @@ namespace InventoryManagementWebApp.Controllers
             try
             {
                 cmd.ExecuteNonQuery();
-                TempData["Message"] = "User updated successfully!";
+                TempData["Message"] = "მონაცემები წარმატებით განახლდა!";
                 return RedirectToAction("Users");
             }
             catch (SqlException ex)
@@ -319,12 +315,7 @@ namespace InventoryManagementWebApp.Controllers
 
             // ნიღბის დათვლა ახალი იუზერისთვის
             // შენიშვნა: დარწმუნდით რომ CreateUserViewModel კლასშიც გაქვთ დამატებული ის 4 bool ველი CheckBox-ებისთვის
-            int mask = CalculateProductsMask(
-                model.CanAccessWine,
-                model.CanAccessSparkling,
-                model.CanAccessSpirit,
-                model.CanAccessWineBased
-            );
+            int mask = CalculateProductsMask(model.CanAccessWine, model.CanAccessSpirit);
 
             using var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             conn.Open();
@@ -465,10 +456,8 @@ namespace InventoryManagementWebApp.Controllers
 
                     // რიცხვის შენახვა და ოთხი CheckBox-ისთვის მნიშვნელობების (True/False) მინიჭება
                     AllowedProductsMask = mask,
-                    CanAccessWine = (mask & 1) != 0,
-                    CanAccessSparkling = (mask & 2) != 0,
-                    CanAccessSpirit = (mask & 4) != 0,
-                    CanAccessWineBased = (mask & 8) != 0
+                    CanAccessWine = (mask & 11) != 0, // ნიღბის პირველი ბიტი ღვინის წვდომისთვის
+                    CanAccessSpirit = (mask & 20) != 0, // ნიღბის მესამე ბიტი სპირტისთვის (4 + 16)
                 };
             }
             return null;
@@ -491,13 +480,16 @@ namespace InventoryManagementWebApp.Controllers
             return (hash, salt);
         }
 
-        private int CalculateProductsMask(bool wine, bool sparkling, bool spirit, bool wineBased)
+        private int CalculateProductsMask(bool wine, bool spirit)
         {
             int mask = 0;
-            if (wine) mask |= 1;
-            if (sparkling) mask |= 2;
-            if (spirit) mask |= 4;
-            if (wineBased) mask |= 8;
+
+            // თუ ღვინო მონიშნულია: 1 (Wine) + 2 (Sparkling) + 8 (Wine-Based) = 11
+            if (wine) mask |= 11;
+
+            // თუ სპირტი მონიშნულია: 4 + 16 = 20
+            if (spirit) mask |= 20;
+
             return mask;
         }
     }

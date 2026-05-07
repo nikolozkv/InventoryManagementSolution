@@ -17,6 +17,12 @@ namespace InventoryManagementWebApp.Controllers
     {
         private readonly InventoryContext _context;
 
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            return int.TryParse(userIdClaim, out int id) ? id : 1;
+        }
+
         public Operations_SpiritsController(InventoryContext context)
         {
             _context = context;
@@ -25,9 +31,6 @@ namespace InventoryManagementWebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(int barrelId)
         {
-            // ✅ პირდაპირ ვაფიქსირებთ სპირტის ფერს
-            ViewBag.CurrentThemeColor = "#e9f2fa";
-
             var barrel = await _context.Barrels
                 .Include(b => b.Company).ThenInclude(c => c.CompanyType)
                 .Include(b => b.Beverage).ThenInclude(bv => bv.ProductType)
@@ -39,6 +42,9 @@ namespace InventoryManagementWebApp.Controllers
 
             if (barrel == null)
                 return NotFound("სპირტის კასრი ვერ მოიძებნა.");
+
+            // თემის ფერი აიღე მიმდინარე კასრის სასმელის ტიპიდან
+            ViewBag.CurrentThemeColor = barrel.Beverage?.ProductType?.ThemeColor ?? "#c9def3";
 
             // ვიღებთ სასმელის BitValue-ს (სპირტისთვის იქნება 4)
             // თუ რატომღაც ცარიელია, 0-ით დავაზღვევთ რომ ერორი არ ამოაგდოს
@@ -71,6 +77,7 @@ namespace InventoryManagementWebApp.Controllers
                     .Where(o => o.BarrelID == barrelId)
                     .Include(o => o.OperationDefinition)
                     .Include(o => o.DocumentType)
+                    .Include(o => o.Barrel)
                     .Include(o => o.Beverage).ThenInclude(b => b.ProductType)
                     .Include(o => o.Beverage).ThenInclude(b => b.Category)
                     .Include(o => o.Beverage).ThenInclude(b => b.Color)
@@ -143,6 +150,7 @@ namespace InventoryManagementWebApp.Controllers
                 CurrentVolume = barrel.CurrentVolume, // ✅ დაემატა "m" 
                 WeightedAvgDate = barrel.WeightedAvgDate,
                 CurrentAlcPercent = barrel.CurrentAlcPercent,
+                RealPercent = barrel.RealPercent,
 
                 // ✅ გასწორდა Select-ის ლოგიკა (დაემატა ბლოკი { ... return new ... })
                 Operations = operations.Select(o =>
@@ -169,10 +177,20 @@ namespace InventoryManagementWebApp.Controllers
                         OperName = o.OperName,
                         DocumentNumber = o.DocumentNumber,
                         DocumentTypeName = o.DocumentType?.DocumentName,
-                        Quantity = (o.Math == "-" ? "-" : "+") + o.Quantity.ToString("0.##"),
+                        Quantity = (o.Math == "-" ? "-" : "+") + o.Quantity.ToString("### ### ##0.00"),
                         VolumeLeft = o.VolumeLeft,
 
-                        BeverageName = o.Beverage?.Name,
+                        BeverageName = (o.Beverage?.Name ?? "") +
+                            // ✅ ღვინისთვის (BitValue 1, 2, 8)
+                            ((o.Beverage?.ProductType?.BitValue & 11) > 0 ?
+                                $" ({(o.HarvestYear > 0 ? o.HarvestYear.ToString() : (o.Barrel?.Year > 0 ? o.Barrel.Year.ToString() : "--"))})"
+                            : "") +
+
+                            // ✅ სპირტისთვის (BitValue 4, 16)
+                            ((o.Beverage?.ProductType?.BitValue & 20) > 0 ?
+                                $" ({(o.Barrel?.RealPercent > 0 ? o.Barrel.RealPercent?.ToString("0.##") : "--")}°)"
+                            : ""),
+
                         ProductType = o.Beverage?.ProductType?.Name,
                         Category = o.Beverage?.Category?.Name,
                         Color = o.Beverage?.Color?.Name,
@@ -180,6 +198,8 @@ namespace InventoryManagementWebApp.Controllers
                         ExecutedByUserID = o.ExecutedByUserID,
                         ExecutedByUserFirstName = firstName,     // ✅ ახლა უკვე დაინახავს ცვლადს
                         ExecutedByUserLastName = lastName,       // ✅ ახლა უკვე დაინახავს ცვლადს
+                        WeightedAvgDate = o.WeightedAvgDate,
+                        IncomingAvgDate = o.IncomingAvgDate, // ✅ დაემატა IncomingAvgDate
                         LinkedOperationID = o.LinkedOperationID,
                         SourceCompanyID = o.SourceCompanyID,
                         SourceBarrelID = o.SourceBarrelID,
@@ -196,21 +216,7 @@ namespace InventoryManagementWebApp.Controllers
         {
             try
             {
-                var currentUserName = User.Identity?.Name;
-                if (!string.IsNullOrEmpty(currentUserName))
-                {
-                    using var conn = new SqlConnection(_context.Database.GetConnectionString());
-                    conn.Open();
-
-                    var cmd = new SqlCommand("SELECT UserId FROM Users WHERE Username = @username", conn);
-                    cmd.Parameters.AddWithValue("@username", currentUserName);
-
-                    var result = cmd.ExecuteScalar();
-                    if (result != null)
-                    {
-                        model.ExecutedByUserID = Convert.ToInt32(result);
-                    }
-                }
+                model.ExecutedByUserID = GetCurrentUserId();
 
                 var parameters = new[]
                 {
@@ -224,13 +230,15 @@ namespace InventoryManagementWebApp.Controllers
                     new SqlParameter("@DocumentNumber", model.DocumentNumber ?? ""),
                     new SqlParameter("@DocumentTypeID", model.DocumentTypeID),
                     new SqlParameter("@ExecutedByUserID", (object?)model.ExecutedByUserID ?? DBNull.Value),
+                    // INPUT — არა OUTPUT; ბაზაში @RealPercent უნდა იყოს ჩვეულებრივი პარამეტრი (OUTPUT-ის გარეშე).
+                    new SqlParameter("@RealPercent", (object?)model.RealPercent ?? DBNull.Value),
                     new SqlParameter { ParameterName = "@NewOperationID", SqlDbType = SqlDbType.Int, Direction = ParameterDirection.Output },
                     new SqlParameter { ParameterName = "@Message", SqlDbType = SqlDbType.NVarChar, Size = 200, Direction = ParameterDirection.Output }
                 };
 
                 // აქ ვიძახებთ სპირტის სპეციალურ პროცედურას!
                 await _context.Database.ExecuteSqlRawAsync(
-                    "EXEC dbo.Spirit_ExecuteOperation @OperationDefID, @BarrelID, @Quantity, @TransactionDate, @WineAlcPercent, @LossPercent, @OppositeBarrelID, @DocumentNumber, @DocumentTypeID, @ExecutedByUserID, @NewOperationID OUTPUT, @Message OUTPUT",
+                    "EXEC dbo.Spirit_ExecuteOperation @OperationDefID, @BarrelID, @Quantity, @TransactionDate, @WineAlcPercent, @LossPercent, @OppositeBarrelID, @DocumentNumber, @DocumentTypeID, @ExecutedByUserID, @RealPercent, @NewOperationID OUTPUT, @Message OUTPUT",
                     parameters);
 
                 var message = parameters.First(p => p.ParameterName == "@Message").Value?.ToString();
@@ -258,31 +266,46 @@ namespace InventoryManagementWebApp.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete(int operationId)
         {
+            // 1. ვპოულობთ კასრის ID-ს რედირექტისთვის
             int? barrelId = await _context.Operations
                 .Where(o => o.OperationID == operationId)
                 .Select(o => (int?)o.BarrelID)
                 .FirstOrDefaultAsync();
 
             if (barrelId == null)
-                return NotFound();
+                return NotFound("ოპერაცია ვერ მოიძებნა.");
 
-            var msgParam = new SqlParameter("@Message", SqlDbType.NVarChar, 200) { Direction = ParameterDirection.Output };
+            // 2. ვამზადებთ პარამეტრებს ახალი პროცედურისთვის
+            int userId = GetCurrentUserId();
+
             var opIdParam = new SqlParameter("@OperationID", operationId);
+            var userIdParam = new SqlParameter("@ExecutedByUserID", userId);
+            var batchIdParam = new SqlParameter("@BatchID", DBNull.Value); // ინდივიდუალური წაშლაა, ამიტომ Null
+            var msgParam = new SqlParameter("@Message", SqlDbType.NVarChar, 200) { Direction = ParameterDirection.Output };
 
-            // ვიყენებთ არსებულ DeleteOperation პროცედურას, რადგან ის უნივერსალურია და 
-            // წაშლის შემდეგ გადათვლისთვის RecalculateRippleEffect-ს იძახებს. 
-            // (შენიშვნა: თუ სპირტისთვის ცალკე Spirit_DeleteOperation გაქვს ბაზაში, აქ ის უნდა გამოიძახო)
-            await _context.Database.ExecuteSqlRawAsync("EXEC dbo.DeleteOperation @OperationID, @Message OUTPUT", opIdParam, msgParam);
+            try
+            {
+                // 3. ვიძახებთ განახლებულ პროცედურას
+                await _context.Database.ExecuteSqlRawAsync(
+                    "EXEC dbo.DeleteOperation @OperationID, @ExecutedByUserID, @BatchID, @Message OUTPUT",
+                    opIdParam, userIdParam, batchIdParam, msgParam);
 
-            var message = msgParam.Value?.ToString();
-            TempData["DeleteMessage"] = message;
+                var message = msgParam.Value?.ToString();
+                TempData["DeleteMessage"] = message;
 
-            if (message != null && message.Contains("წაიშალა"))
-                TempData["DeleteStatus"] = "success";
-            else if (message != null && (message.Contains("ვერ მოიძებნა") || message.Contains("უარყვნილი")))
-                TempData["DeleteStatus"] = "warning";
-            else
+                // 4. სტატუსების მართვა შეტყობინების მიხედვით
+                if (message != null && (message.Contains("წარმატებით") || message.Contains("დაარქივდა")))
+                    TempData["DeleteStatus"] = "success";
+                else if (message != null && (message.Contains("ვერ მოიძებნა") || message.Contains("უარყვნილი")))
+                    TempData["DeleteStatus"] = "warning";
+                else
+                    TempData["DeleteStatus"] = "error";
+            }
+            catch (Exception ex)
+            {
+                TempData["DeleteMessage"] = "კრიტიკული შეცდომა წაშლისას: " + ex.Message;
                 TempData["DeleteStatus"] = "error";
+            }
 
             return RedirectToAction(nameof(Index), new { barrelId = barrelId.Value });
         }
@@ -326,7 +349,7 @@ namespace InventoryManagementWebApp.Controllers
             var result = new List<SelectListItem>();
 
             using (var conn = _context.Database.GetDbConnection() as SqlConnection)
-            using (var cmd = new SqlCommand("Spirit_GetFilteredBarrelsForTransfer", conn)) // ✅ ახალი პროცედურა
+            using (var cmd = new SqlCommand("Spirit_GetFilteredBarrelsForTransfer", conn))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@BarrelID", barrelId);
@@ -336,13 +359,41 @@ namespace InventoryManagementWebApp.Controllers
                 await conn.OpenAsync();
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
+                    // 1. წინასწარ ვიგებთ სვეტების პოზიციას (ოპტიმიზაციისთვის)
+                    int realPercentIndex = -1;
+                    int yearIndex = -1;
+
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetName(i) == "RealPercent") realPercentIndex = i;
+                        if (reader.GetName(i) == "Year") yearIndex = i;
+                    }
+
                     while (await reader.ReadAsync())
                     {
+                        var beverageName = reader["BeverageName"]?.ToString();
+                        var volume = reader["CurrentVolume"] != DBNull.Value
+                            ? Convert.ToDecimal(reader["CurrentVolume"]).ToString("0.##")
+                            : "0";
+
+                        string extraInfo = "";
+
+                        // ✅ თუ სვეტი "RealPercent" არსებობს და მასში მონაცემია (სპირტებისთვის)
+                        if (realPercentIndex != -1 && reader[realPercentIndex] != DBNull.Value && Convert.ToDecimal(reader[realPercentIndex]) > 0)
+                        {
+                            extraInfo = $" ({Convert.ToDecimal(reader[realPercentIndex]).ToString("0.##")}°)";
+                        }
+                        // ✅ თუ სვეტი "Year" არსებობს და მასში მონაცემია (ღვინის გამოხდისას)
+                        else if (yearIndex != -1 && reader[yearIndex] != DBNull.Value)
+                        {
+                            extraInfo = $" ({reader[yearIndex]})";
+                        }
+
                         result.Add(new SelectListItem
                         {
                             Value = reader["BarrelID"].ToString(),
-                            // ✅ ტექსტში შეგვიძლია წელი ამოვიღოთ, ან დავტოვოთ თუ გინდა ჩანდეს
-                            Text = $"{reader["BeverageName"]} - {reader["CurrentVolume"]} ლ"
+                            // ✅ ფორმატი: "BeverageName (Year ან RealPercent) - CurrentVolume ლ"
+                            Text = $"{beverageName}{extraInfo} - {volume} ლ"
                         });
                     }
                 }

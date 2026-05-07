@@ -20,6 +20,8 @@ namespace InventoryManagementWebApp.Models
         public decimal? VolumeLeft { get; set; }  // ✅ ახალ ველად
         public int BarrelID { get; set; }
         public string BeverageName { get; set; } = string.Empty;
+        public DateTime? WeightedAvgDate { get; set; }  // საშუალო თარიღი (ასაკისთვის)
+        public DateTime? IncomingAvgDate { get; set; }  // ახალი საშუალო თარიღი (ასაკისთვის)
         public string ProductType { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
         public string Color { get; set; } = string.Empty;

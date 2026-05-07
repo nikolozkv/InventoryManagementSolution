@@ -24,10 +24,13 @@ namespace InventoryManagementWebApp.Models
         public decimal CurrentVolume { get; set; }
         public DateTime? WeightedAvgDate { get; set; } // ✅ სპირტის ასაკის ათვლის წერტილი
         public decimal? CurrentAlcPercent { get; set; } // ✅ ალკოჰოლის პროცენტი
-
+        public decimal? RealPercent { get; set; } // ✅ სასმელის რეალური პროცენტი
         // ოპერაციების ისტორია
         // (აქ შეგვიძლია გამოვიყენოთ იგივე OperationItemViewModel, რაც ღვინოში გაქვს, 
         // რადგან ისტორიის ცხრილში ველები მეტწილად იდენტურია)
         public List<OperationItemViewModel> Operations { get; set; }
+
+        public int DocumentTypeID { get; set; }
+        public string? DocumentNumber { get; set; }
     }
 }

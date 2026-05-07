@@ -44,8 +44,8 @@ body {
 
 /* ... rest of your CSS ... */
 
-.container-fluid-90 {
-    width: 90%;
+.container-fluid-95 {
+    width: 95%;
     padding-right: var(--bs-gutter-x, 0.75rem); /* Keep Bootstrap's default horizontal padding */
     padding-left: var(--bs-gutter-x, 0.75rem); /* Keep Bootstrap's default horizontal padding */
     margin-right: auto; /* Center the container */
@@ -375,7 +375,7 @@ html, body {
             flex-wrap: wrap;
         }
 
-    .container-fluid-90 {
+    .container-fluid-98 {
         width: 100%; /* Go full width on very small screens */
     }
 
@@ -428,4 +428,14 @@ html, body {
 .btn:disabled:hover, .btn.disabled:hover {
     transform: none;
     box-shadow: none;
+}
+
+/* ავტომატური სიმაღლის ტექსტარეას სტილი */
+.auto-height-textarea {
+    overflow: hidden;
+    resize: none;
+    min-height: 31px;
+    display: block;
+    width: 100%;
+    transition: height 0.1s ease; /* სიმაღლის ცვლილება იყოს რბილი */
 }

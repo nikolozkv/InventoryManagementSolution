@@ -9,14 +9,14 @@
     <hr class="mb-5" />
 
     <div class="row gx-4">
-        <div class="col-lg-4 col-md-6 mb-4">
+        <div class="col-lg-3 col-md-6 mb-4">
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0 fs-5"><i class="bi bi-info-circle-fill me-2"></i> კასრის დეტალები</h5>
+                    <h5 class="mb-0 fs-6"><i class="bi bi-info-circle-fill me-2"></i> კასრის დეტალები</h5>
                 </div>
                 <div class="card-body">
                     <h4 class="card-title text-primary fw-bold">@Model.CompanyTypeName - @Model.CompanyName</h4>
-                    <h5 class="card-text mb-0 mt-2 fs-5"><strong>ლოტი:</strong> @Model.CompanyLot</h5>
+                    <h5 class="card-text mb-0 mt-2 fs-6"><strong>ლოტი:</strong> @Model.CompanyLot</h5>
                 </div>
             </div>
 
@@ -26,18 +26,18 @@
                 </div>
                 <div class="card-body">
                     <h5 class="card-subtitle mb-3 text-muted fw-bold">კასრი: @Model.BeverageName (@(Model.HarvestYear > 0 ? Model.HarvestYear.ToString() : "უწლოვანო"))</h5>
-                    <p class="card-text mb-2 fs-5">
+                    <p class="card-text mb-2 fs-6">
                         <i class="bi bi-droplet-fill text-primary me-2"></i> <strong>ნაშთი:</strong> @Model.CurrentVolume ლ
                     </p>
 
                     @* 1. წლის პროცენტის ლოგიკა: აქვს წელი (HarvestYear > 0) და პროცენტი < 85 *@
-                    <p class="card-text mb-2 d-flex align-items-center fs-5">
+                    <p class="card-text mb-2 d-flex align-items-center fs-6">
                         <i class="bi bi-calendar-fill text-success me-2"></i> <strong class="me-2">წლის %:</strong>
                         @if (Model.HarvestYear > 0 && Model.YearPercentage < 85 && @Model.CurrentVolume > 0)
                         {
                             <span class="text-danger fw-bold bg-danger bg-opacity-10 px-2 py-1 rounded d-inline-flex align-items-center border border-danger border-opacity-25 fs-6">
                                 @Model.YearPercentage%
-                                <i class="bi bi-exclamation-triangle-fill ms-2 fs-5 text-danger" title="ყურადღება! წლის პროცენტი 85%-ზე დაბალია"></i>
+                                <i class="bi bi-exclamation-triangle-fill ms-2 fs-6 text-danger" title="ყურადღება! წლის პროცენტი 85%-ზე დაბალია"></i>
                             </span>
                         }
                         else
@@ -47,13 +47,13 @@
                     </p>
 
                     @* 2. სუფთა პროცენტის ლოგიკა: არ არის კუპაჟი და პროცენტი < 85 *@
-                    <p class="card-text mb-1 d-flex align-items-center fs-5">
+                    <p class="card-text mb-1 d-flex align-items-center fs-6">
                         <i class="bi bi-patch-check-fill text-info me-2"></i> <strong class="me-2">სუფთა %:</strong>
                         @if (Model.SubCategory != "კუპაჟი" && Model.PurePercentage < 85 && @Model.CurrentVolume > 0)
                         {
                             <span class="text-danger fw-bold bg-danger bg-opacity-10 px-2 py-1 rounded d-inline-flex align-items-center border border-danger border-opacity-25 fs-6">
                                 @Model.PurePercentage%
-                                <i class="bi bi-exclamation-triangle-fill ms-2 fs-5 text-danger" title="ყურადღება! ჯიშური სასმელის სისუფთავე 85%-ზე დაბალია"></i>
+                                <i class="bi bi-exclamation-triangle-fill ms-2 fs-6 text-danger" title="ყურადღება! ჯიშური სასმელის სისუფთავე 85%-ზე დაბალია"></i>
                             </span>
                         }
                         else
@@ -69,7 +69,7 @@
                     <h6 class="mb-0 fs-6 fw-bold">მახასიათებლები</h6>
                 </div>
                 <div class="card-body">
-                    <ul class="list-unstyled mb-0 fs-5">
+                    <ul class="list-unstyled mb-0 fs-6">
                         <li class="mb-2"><i class="bi bi-tag-fill text-info me-2"></i> <strong>სასმელი:</strong> @Model.ProductType</li>
                         <li class="mb-2"><i class="bi bi-bookmark-fill text-primary me-2"></i> <strong>კატეგორია:</strong> @Model.Category</li>
                         <li class="mb-2"><i class="bi bi-palette-fill text-warning me-2"></i> <strong>ფერი:</strong> @Model.Color</li>
@@ -79,10 +79,10 @@
             </div>
         </div>
 
-        <div class="col-lg-8 col-md-6 mb-4">
+        <div class="col-lg-9 col-md-6 mb-4">
             <div class="card h-100 shadow-sm d-flex flex-column">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0 fs-5"><i class="bi bi-plus-circle-fill me-2"></i> ახალი ოპერაცია</h5>
+                    <h5 class="mb-0 fs-6"><i class="bi bi-plus-circle-fill me-2"></i> ახალი ოპერაცია</h5>
                 </div>
                 <div class="card-body overflow-auto">
                     <form asp-action="Create" method="post" id="operationForm">
@@ -148,7 +148,10 @@
                                 <div class="d-flex align-items-center mb-2">
                                     <label for="DocumentNumber" class="form-label compact-label fs-6"><i class="bi bi-hash text-secondary me-2"></i> საბუთის №</label>
                                     <div class="flex-grow-1">
-                                        <input type="text" name="DocumentNumber" id="DocumentNumber" class="form-control form-control-sm" required />
+                                        <textarea name="DocumentNumber" id="DocumentNumber"
+                                                  class="form-control form-control-sm auto-height-textarea"
+                                                  oninput="autoHeight(this)"
+                                                  required>@Model?.DocumentNumber</textarea>
                                         <span asp-validation-for="DocumentNumber" class="text-danger small"></span>
                                     </div>
                                 </div>
@@ -360,10 +363,12 @@
                         <tr class="@rowClass">
                             <td>@op.TransactionDate.ToString("yyyy-MM-dd")</td>
                             <td>@op.DocumentTypeName</td>
-                            <td>@op.DocumentNumber</td>
+                            <td style="word-wrap: break-word; min-width: 70px; max-width: 280px; white-space: normal;">
+                                @op.DocumentNumber
+                            </td>
                             <td>
                                 @op.BeverageName
-                                <div style="text-align: right; font-size: small; font-weight: bold; color: black;">
+                                <div style="text-align: left; padding-left: 1rem; font-size: small; font-weight: bold; color: black;">
                                     @op.ExecutedByUserFullName
                                 </div>
                             </td>
@@ -437,19 +442,19 @@
 
         /* Responsive adjustments for the info section characteristics card */
         @@media (min-width: 768px) {
-            .col-lg-4.col-md-6 {
+            .col-lg-3.col-md-6 {
                 display: flex;
                 flex-direction: column;
             }
 
-                .col-lg-4.col-md-6 .card:last-child {
+                .col-lg-3.col-md-6 .card:last-child {
                     flex-grow: 1;
                 }
         }
 
         /* --- New styles for labels next to inputs --- */
         .compact-label {
-            width: 140px;
+            width: 200px;
             flex-shrink: 0;
             margin-right: 0.5rem;
             text-align: right;

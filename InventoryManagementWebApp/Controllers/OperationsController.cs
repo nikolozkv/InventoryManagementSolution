@@ -28,22 +28,23 @@ namespace InventoryManagementWebApp.Controllers
             if (barrel == null)
                 return NotFound("კასრი ვერ მოიძებნა.");
 
-            // ვიღებთ TypeCode-ს (მაგ: 'WINE', 'SPIRIT', 'SPARKLING')
-            string typeCode = barrel.Beverage?.ProductType?.TypeCode?.ToUpper() ?? "WINE";
+            // ვიღებთ TypeCode-ის BitValue (მაგ: 1-'WINE', 4-'SPIRIT', 2-'SPARKLING', 16-'ALCOHOLIC BEVERAGES')
+            int typeCode = barrel.Beverage?.ProductType?.BitValue ?? 11;
 
             // გადამისამართება შესაბამის კონტროლერზე
             switch (typeCode)
             {
-                case "SPIRIT":
+                case (4): // სპირტი
+                case (16): // სპირტიანი სასმელი
+
                     return RedirectToAction("Index", "Operations_Spirits", new { barrelId = barrelId });
 
-                case "WINE":
-                case "SPARKLING": // ცქრიალასაც ღვინის ლოგიკა აქვს
+                case (1): // ღვინო
+                case (2): // ცქრიალა ღვინო
                     return RedirectToAction("Index", "Operations_Wine", new { barrelId = barrelId });
 
-                case "WINE-BASED":
+                case (8): // ღვინისეული
                     // თუ სამომავლოდ შეიქმნება:
-                    // return RedirectToAction("Index", "Operations_WineBase", new { barrelId = barrelId });
                     return RedirectToAction("Index", "Operations_Wine", new { barrelId = barrelId }); // დროებით ისევ ღვინოზე
 
                 default:

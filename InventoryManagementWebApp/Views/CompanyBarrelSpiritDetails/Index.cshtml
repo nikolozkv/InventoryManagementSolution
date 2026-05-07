@@ -112,7 +112,12 @@
                 {
                     <tr>
                         <td>@barrel.BarrelID</td>
-                        <td>@barrel.BeverageName</td>
+
+                        <td>
+                            @barrel.BeverageName <br />
+                            <strong>( @(barrel.RealPercent > 0 ? barrel.RealPercent.ToString() : "--")° )</strong>
+                        </td>
+                   
                         <td>@barrel.ProductType</td>
                         <td>@barrel.Category</td>
                         <td>@barrel.Color</td>
@@ -169,7 +174,7 @@
     <style>
         /* ფონი - ცივი ცისფერი სპირტისთვის */
         body {
-        background-color: #e9f2fa;
+        background-color: #c9def3;
         }
 
         .main-container {

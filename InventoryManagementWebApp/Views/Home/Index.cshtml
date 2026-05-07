@@ -7,7 +7,7 @@
     // ვშიფრავთ უფლებებს ბიტური ოპერატორით
     bool canSeeWine = (mask & 1) != 0;
     bool canSeeSparkling = (mask & 2) != 0;
-    bool canSeeSpirit = (mask & 4) != 0;
+    bool canSeeSpirit = (mask & 20) != 0;
     bool canSeeWineBased = (mask & 8) != 0;
     
     // ღვინის ბლოკი გამოჩნდეს, თუ აქვს წვდომა ღვინოზე, ცქრიალაზე ან ღვინისეულზე
@@ -181,7 +181,7 @@
 
         @if (canSeeSpirit)
         {
-            <a href="/CompanyBarrels/Index?typeMask=4" class="card-link">
+            <a href="/CompanyBarrels/Index?typeMask=20" class="card-link">
                 <span class="icon">🔥⚗️</span>
                 <h3>სპირტის წარმოება</h3>
                 <p>იხილეთ სპირტის მარაგები, დისტილაცია და ბრუნვა.</p>

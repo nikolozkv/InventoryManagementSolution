@@ -156,10 +156,10 @@ public class AccountController : Controller
 
         // ნიღბის დათვლა მონიშნული CheckBox-ებიდან
         int mask = 0;
-        if (model.CanAccessWine) mask |= 1;
-        if (model.CanAccessSparkling) mask |= 2;
-        if (model.CanAccessWineBased) mask |= 8;
-        if (model.CanAccessSpirit) mask |= 4;
+        if (model.CanAccessWine) mask |= 1; // 1-ლი ბიტი ღვინისთვის
+        if (model.CanAccessSparkling) mask |= 2; // 2-ლი ბიტი სპარკლინგისთვის
+        if (model.CanAccessWineBased) mask |= 8; // 4-ლი ბიტი ღვინოზე დაფუძნებული სასმელებისთვის
+        if (model.CanAccessSpirit) mask |= 20; // 20-ლი ბიტი სპირტისთვის (4 + 16)
 
         var (passwordHash, passwordSalt) = CreatePasswordHash(model.Password);
 

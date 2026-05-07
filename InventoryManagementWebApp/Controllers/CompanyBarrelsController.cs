@@ -42,7 +42,23 @@ namespace InventoryManagementWebApp.Controllers
                 // 2. 🆕 ნაბიჯი 3: ბაზიდან ფერის ამოღება (ამას ვამატებთ)
                 var productType = _context.BeverageProductTypes
                     .FirstOrDefault(pt => pt.BitValue == typeMask.Value);
-                string themeColor = productType?.ThemeColor ?? "#ece9e6";
+
+                string themeColor;
+                if (productType?.ThemeColor is not null)
+                {
+                    // Exact match exists (single product type mask).
+                    themeColor = productType.ThemeColor;
+                }
+                else
+                {
+                    // Fallback for grouped masks (e.g. 11, 20):
+                    // pick the first matching product type by Position.
+                    themeColor = _context.BeverageProductTypes
+                        .Where(pt => (pt.BitValue & typeMask.Value) > 0 && pt.ThemeColor != null)
+                        .OrderBy(pt => pt.Position)
+                        .Select(pt => pt.ThemeColor!)
+                        .FirstOrDefault() ?? "#ece9e6";
+                }
 
                 // 3. 🆕 ფერის შენახვა Cookie-ში (ამასაც ვამატებთ)
                 HttpContext.Response.Cookies.Append(

@@ -19,6 +19,12 @@ namespace InventoryManagementWebApp.Controllers
     {
         private readonly InventoryContext _context;
 
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            return int.TryParse(userIdClaim, out int id) ? id : 1;
+        }
+
         public Operations_WineController(InventoryContext context)
         {
             _context = context;
@@ -27,9 +33,6 @@ namespace InventoryManagementWebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(int barrelId)
         {
-            // ✅ პირდაპირ ვაფიქსირებთ ღვინის ფერს
-            ViewBag.CurrentThemeColor = "#ece9e6";
-
             var barrel = await _context.Barrels
                 .Include(b => b.Company).ThenInclude(c => c.CompanyType)
                 .Include(b => b.Beverage).ThenInclude(bv => bv.ProductType)
@@ -41,6 +44,9 @@ namespace InventoryManagementWebApp.Controllers
 
             if (barrel == null)
                 return NotFound("კასრი ვერ მოიძებნა.");
+
+            // თემის ფერი აიღე მიმდინარე კასრის სასმელის ტიპიდან
+            ViewBag.CurrentThemeColor = barrel.Beverage?.ProductType?.ThemeColor ?? "#ece9e6";
 
             // ვიღებთ სასმელის BitValue-ს (ღვინისთვის იქნება 11=1+2+8)
             // თუ რატომღაც ცარიელია, 0-ით დავაზღვევთ რომ ერორი არ ამოაგდოს
@@ -182,7 +188,7 @@ namespace InventoryManagementWebApp.Controllers
                         OperName = o.OperName,
                         DocumentNumber = o.DocumentNumber,
                         DocumentTypeName = o.DocumentType?.DocumentName,
-                        Quantity = (o.Math == "-" ? "-" : "+") + o.Quantity.ToString("0.##"),
+                        Quantity = (o.Math == "-" ? "-" : "+") + o.Quantity.ToString("### ### ##0.00"),
                         VolumeLeft = o.VolumeLeft,
                         HarvestYear = o.HarvestYear,
                         YearPercentage = o.YearAPercent,
@@ -221,22 +227,7 @@ namespace InventoryManagementWebApp.Controllers
 
             try
             {
-                // Fetch UserID based on username
-                var currentUserName = User.Identity?.Name;
-                if (!string.IsNullOrEmpty(currentUserName))
-                {
-                    using var conn = new SqlConnection(_context.Database.GetConnectionString());
-                    conn.Open();
-
-                    var cmd = new SqlCommand("SELECT UserId FROM Users WHERE Username = @username", conn);
-                    cmd.Parameters.AddWithValue("@username", currentUserName);
-
-                    var result = cmd.ExecuteScalar();
-                    if (result != null)
-                    {
-                        model.ExecutedByUserID = Convert.ToInt32(result);
-                    }
-                }
+                model.ExecutedByUserID = GetCurrentUserId();
 
                 var parameters = new[]
                 {
@@ -287,29 +278,46 @@ namespace InventoryManagementWebApp.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete(int operationId)
         {
+            // 1. ვპოულობთ კასრის ID-ს, რომ ვიცოდეთ რომელ გვერდზე დავუბრუნდეთ წაშლის შემდეგ
             int? barrelId = await _context.Operations
                 .Where(o => o.OperationID == operationId)
                 .Select(o => (int?)o.BarrelID)
                 .FirstOrDefaultAsync();
 
             if (barrelId == null)
-                return NotFound();
+                return NotFound("ოპერაცია ვერ მოიძებნა.");
 
-            var msgParam = new SqlParameter("@Message", SqlDbType.NVarChar, 200) { Direction = ParameterDirection.Output };
+            // 2. ვამზადებთ პარამეტრებს ახალი პროცედურისთვის
+            int userId = GetCurrentUserId();
+
             var opIdParam = new SqlParameter("@OperationID", operationId);
+            var userIdParam = new SqlParameter("@ExecutedByUserID", userId);
+            var batchIdParam = new SqlParameter("@BatchID", DBNull.Value); // ინდივიდუალური წაშლაა, ამიტომ Null
+            var msgParam = new SqlParameter("@Message", SqlDbType.NVarChar, 200) { Direction = ParameterDirection.Output };
 
-            await _context.Database.ExecuteSqlRawAsync("EXEC dbo.DeleteOperation @OperationID, @Message OUTPUT", opIdParam, msgParam);
+            try
+            {
+                // 3. ვიძახებთ განახლებულ პროცედურას
+                await _context.Database.ExecuteSqlRawAsync(
+                    "EXEC dbo.DeleteOperation @OperationID, @ExecutedByUserID, @BatchID, @Message OUTPUT",
+                    opIdParam, userIdParam, batchIdParam, msgParam);
 
-            var message = msgParam.Value?.ToString();
-            TempData["DeleteMessage"] = message;
+                var message = msgParam.Value?.ToString();
+                TempData["DeleteMessage"] = message;
 
-            // 👇 აქ შეცვალე "danger" => "error"
-            if (message != null && message.Contains("წაიშალა"))
-                TempData["DeleteStatus"] = "success";
-            else if (message != null && (message.Contains("ვერ მოიძებნა") || message.Contains("უარყვნილი")))
-                TempData["DeleteStatus"] = "warning";
-            else
+                // 4. სტატუსების მართვა შეტყობინების მიხედვით
+                if (message != null && (message.Contains("წარმატებით") || message.Contains("დაარქივდა")))
+                    TempData["DeleteStatus"] = "success";
+                else if (message != null && (message.Contains("ვერ მოიძებნა") || message.Contains("უარყვნილი")))
+                    TempData["DeleteStatus"] = "warning";
+                else
+                    TempData["DeleteStatus"] = "error";
+            }
+            catch (Exception ex)
+            {
+                TempData["DeleteMessage"] = "კრიტიკული შეცდომა წაშლისას: " + ex.Message;
                 TempData["DeleteStatus"] = "error";
+            }
 
             return RedirectToAction(nameof(Index), new { barrelId = barrelId.Value });
         }

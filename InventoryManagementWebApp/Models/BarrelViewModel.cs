@@ -20,5 +20,6 @@
         // ⚠️ მნიშვნელოვანია: თუ ბაზა უკვე აბრუნებს ამ ორ სვეტს, ისინი აქ უნდა იყოს!
         public DateTime? WeightedAvgDate { get; set; }
         public int? ProductTypeBitValue { get; set; }
+        public decimal? RealPercent { get; set; } // ✅ სასმელის რეალური პროცენტი
     }
 }

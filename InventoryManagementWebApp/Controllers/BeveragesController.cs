@@ -79,6 +79,11 @@ namespace InventoryManagementWebApp.Controllers
                 .Include(b => b.SubCategory)
                 .Include(b => b.Color)
                 .Include(b => b.Sweetness)
+
+                .OrderBy(b => b.ProductType.Position)
+                .ThenBy(b => b.Category.Position)
+                .ThenBy(b => b.BeverageID)
+
                 // ცხრილში გამოჩნდეს მხოლოდ ის სასმელები, რომელზეც იუზერს აქვს წვდომა
                 .Where(b => (b.ProductType.BitValue & userMask) > 0)
                 .AsQueryable();

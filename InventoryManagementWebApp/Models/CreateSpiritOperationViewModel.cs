@@ -23,11 +23,16 @@ namespace InventoryManagementWebApp.Models
         [Required(ErrorMessage = "გთხოვთ, მიუთითოთ საბუთის ნომერი")]
         public string DocumentNumber { get; set; }
         public int? ExecutedByUserID { get; set; }
+        /// <summary>OperType = 3 (სხვა კომპანიიდან): UI-დან; ბექი ძირითადად იყენებს OppositeBarrelID-ს.</summary>
+        public int? OppositeCompanyID { get; set; }
         public int? OppositeBarrelID { get; set; }
 
         // --- სპეციფიკური ველები დისტილაციისთვის (OperType = 5) ---
         public DateTime? DistillationDate { get; set; }
         public decimal? WineAlcPercent { get; set; }
         public decimal? LossPercent { get; set; } // ახალი დამატებული ველი
+
+        /// <summary>რეალური გრადუსი A° — იგივე პარამეტრი რაც dbo.Spirit_ExecuteOperation-ში INPUT-ად.</summary>
+        public decimal? RealPercent { get; set; }
     }
 }

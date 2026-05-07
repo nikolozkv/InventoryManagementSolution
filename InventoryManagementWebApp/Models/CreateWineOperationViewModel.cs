@@ -15,7 +15,7 @@ namespace InventoryManagementWebApp.Models
         [Range(0.01, double.MaxValue)]
         public decimal Quantity { get; set; }
 
-        [MaxLength(50)]
+        [MaxLength(500)]
         [Required(ErrorMessage = "გთხოვთ, მიუთითოთ საბუთის ნომერი")]
         public string DocumentNumber { get; set; }
 

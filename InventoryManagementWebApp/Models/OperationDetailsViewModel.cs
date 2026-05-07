@@ -27,7 +27,7 @@ namespace InventoryManagementWebApp.Models
 
         public int? DocumentTypeID { get; set; }
 
-        [MaxLength(50)]
+        [MaxLength(500)]
         public string DocumentNumber { get; set; } = string.Empty;
 
         [Required]

@@ -6,7 +6,7 @@ namespace InventoryManagementWebApp.Models
     public class OperationTargetType
     {
         [Key]
-        public byte Code { get; set; } // 1, 2, 3
+        public byte Code { get; set; } // 1, 2, 3, 4, 5
 
         [Required]
         [StringLength(100)]
