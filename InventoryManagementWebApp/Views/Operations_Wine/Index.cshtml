@@ -299,7 +299,7 @@
                         @* --- გამყოფი ხაზი (ვიზუალური დაშორებისთვის) --- *@
                         <div class="vr mx-5"></div>
 
-                        <button type="submit" class="btn btn-success btn-lg" id="AddButton" form="operationForm">
+                        <button type="submit" class="btn btn-success btn-lg" id="AddButton" form="operationForm" asp-policy="CanManage">
                             <i class="bi bi-plus-circle-fill me-2"></i> დამატება
                         </button>
 
@@ -401,7 +401,7 @@
                                         <i class="bi bi-pencil-fill"></i>
                                     </button> *@
 
-                                    <form asp-action="Delete" method="post" asp-controller="Operations_Wine" class="delete-form">
+                                    <form asp-action="Delete" method="post" asp-controller="Operations_Wine" class="delete-form" asp-policy="CanManage">
                                         <input type="hidden" name="operationId" value="@op.OperationID" />
                                         <button type="submit" class="btn btn-danger btn-sm" title="წაშლა">
                                             <i class="bi bi-trash-fill"></i>
@@ -597,11 +597,11 @@
                 bevColorInput.value = "";
                 bevSweetnessInput.value = "";
                 volumeBeforeInput.value = "";
-                yearPercentReadOnlyInput.value = "";
-                purePercentReadOnlyInput.value = "";
-                yearLimitInput.value = "";
-                pureLimitInput.value = "";
-                addButton.disabled = true;
+                if (yearPercentReadOnlyInput) yearPercentReadOnlyInput.value = "";
+                if (purePercentReadOnlyInput) purePercentReadOnlyInput.value = "";
+                if (yearLimitInput) yearLimitInput.value = "";
+                if (pureLimitInput) pureLimitInput.value = "";
+                if (addButton) addButton.disabled = true;
 
                 if (!operType || !barrelId || !date) {
                     return;
@@ -633,25 +633,29 @@
                     yearPercentReadOnlyInput.value = data.yearPercent ?? "";
                     purePercentReadOnlyInput.value = data.purePercent ?? "";
 
-                    if (data.yearLimit === -1) {
+                    if (yearLimitInput) {
+                        if (data.yearLimit === -1) {
                             yearLimitInput.value = "ლიმიტის გარეშე";
                         } else {
                             yearLimitInput.value = data.yearLimit ?? "";
                         }
+                    }
 
-                    if (data.pureLimit === -1) {
+                    if (pureLimitInput) {
+                        if (data.pureLimit === -1) {
                             pureLimitInput.value = "ლიმიტის გარეშე";
                         } else {
                             pureLimitInput.value = data.pureLimit ?? "";
                         }
+                    }
 
-                    addButton.disabled = !data.allowMix;
+                    if (addButton) addButton.disabled = !data.allowMix;
                     } catch (error) {
                         console.error("Error fetching volume data:", error);
-                        volumeBeforeInput.value = "შეცდომა";
-                        yearLimitInput.value = "";
-                        pureLimitInput.value = "";
-                        addButton.disabled = true;
+                        if (volumeBeforeInput) volumeBeforeInput.value = "შეცდომა";
+                        if (yearLimitInput) yearLimitInput.value = "";
+                        if (pureLimitInput) pureLimitInput.value = "";
+                        if (addButton) addButton.disabled = true;
                     }
                 }
 
@@ -744,65 +748,75 @@
 
             // --- Event Listeners ---
 
-            companySearchInput.addEventListener('input', () => filterDropdown(companySearchInput, oppositeCompanySelect));
-            barrelSearchInput.addEventListener('input', () => filterDropdown(barrelSearchInput, oppositeBarrelSelect));
+            if (companySearchInput && oppositeCompanySelect) companySearchInput.addEventListener('input', () => filterDropdown(companySearchInput, oppositeCompanySelect));
+            if (barrelSearchInput && oppositeBarrelSelect) barrelSearchInput.addEventListener('input', () => filterDropdown(barrelSearchInput, oppositeBarrelSelect));
 
-            unitVolumeInput.addEventListener('input', updateQuantityFromPieces);
-            bottleCountInput.addEventListener('input', updateQuantityFromPieces);
+            if (unitVolumeInput) unitVolumeInput.addEventListener('input', updateQuantityFromPieces);
+            if (bottleCountInput) bottleCountInput.addEventListener('input', updateQuantityFromPieces);
 
-            operationDefSelect.addEventListener('change', async function () {
-                const selectedId = this.value;
-                if (!selectedId) {
-                    operationInfoBox.style.display = 'none';
-                    operTypeInput.value = '';
-                    preserveBarrelStateInput.value = '';
-                    handleCompanyBarrelFields();
-                    toggleHarvestPurityFields();
-                    toggleLimitFields();
+            if (operationDefSelect) {
+                operationDefSelect.addEventListener('change', async function () {
+                    const selectedId = this.value;
+                    if (!selectedId) {
+                        if (operationInfoBox) operationInfoBox.style.display = 'none';
+                        if (operTypeInput) operTypeInput.value = '';
+                        if (preserveBarrelStateInput) preserveBarrelStateInput.value = '';
+                        handleCompanyBarrelFields();
+                        toggleHarvestPurityFields();
+                        toggleLimitFields();
+                        updateVolumeByDate();
+                        return;
+                    }
+
+                    const selected = operationDefinitionsData.find(o => o.operationDefID == selectedId);
+                    if (selected) {
+                        if (operTypeInput) operTypeInput.value = selected.operType;
+                        if (preserveBarrelStateInput) preserveBarrelStateInput.value = selected.preserveBarrelState;
+
+                        await handleCompanyBarrelFields();
+                        toggleHarvestPurityFields();
+                        toggleLimitFields();
+                        updateVolumeByDate();
+                    }
+                });
+            }
+
+            if (oppositeCompanySelect) {
+                oppositeCompanySelect.addEventListener('change', async function () {
+                    const companyId = this.value;
+                    if (oppositeBarrelSelect) {
+                        oppositeBarrelSelect.innerHTML = '';
+                        oppositeBarrelSelect.disabled = true;
+                    }
+                    if (barrelSearchInput) {
+                        barrelSearchInput.disabled = true;
+                        barrelSearchInput.value = '';
+                    }
+
+                    if (!companyId) {
+                        updateVolumeByDate();
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/operations-wine/filtered-barrels?barrelId=${@Model.BarrelID}&operType=3&companyId=${companyId}`);
+                        const barrels = await response.json();
+                        if (oppositeBarrelSelect) {
+                            barrels.forEach(b => {
+                                oppositeBarrelSelect.innerHTML += `<option value="${b.value}">${b.text}</option>`;
+                            });
+                            oppositeBarrelSelect.disabled = false;
+                        }
+                        if (barrelSearchInput) barrelSearchInput.disabled = false;
+                    } catch (error) {
+                        console.error("Error fetching barrels for company:", error);
+                    }
                     updateVolumeByDate();
-                    return;
-                }
+                });
+            }
 
-                const selected = operationDefinitionsData.find(o => o.operationDefID == selectedId);
-                if (selected) {
-                    operTypeInput.value = selected.operType;
-                    preserveBarrelStateInput.value = selected.preserveBarrelState;
-
-                    await handleCompanyBarrelFields();
-                    toggleHarvestPurityFields();
-                    toggleLimitFields();
-                    updateVolumeByDate();
-                }
-            });
-
-            oppositeCompanySelect.addEventListener('change', async function () {
-                const companyId = this.value;
-                oppositeBarrelSelect.innerHTML = '';
-                oppositeBarrelSelect.disabled = true;
-                barrelSearchInput.disabled = true;
-                barrelSearchInput.value = '';
-
-                if (!companyId) {
-                    updateVolumeByDate();
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`/api/operations-wine/filtered-barrels?barrelId=${@Model.BarrelID}&operType=3&companyId=${companyId}`);
-                    const barrels = await response.json();
-                    barrels.forEach(b => {
-                        oppositeBarrelSelect.innerHTML += `<option value="${b.value}">${b.text}</option>`;
-                    });
-                    oppositeBarrelSelect.disabled = false;
-                    barrelSearchInput.disabled = false;
-                } catch (error) {
-                    console.error("Error fetching barrels for company:", error);
-                }
-                updateVolumeByDate();
-            });
-
-            oppositeBarrelSelect.addEventListener('change', updateVolumeByDate);
-            transactionDateInput.addEventListener('change', updateVolumeByDate);
+            if (oppositeBarrelSelect) oppositeBarrelSelect.addEventListener('change', updateVolumeByDate);
+            if (transactionDateInput) transactionDateInput.addEventListener('change', updateVolumeByDate);
 
             // Initial calls on page load
             handleCompanyBarrelFields();

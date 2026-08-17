@@ -1,4 +1,4 @@
-﻿@model IEnumerable<InventoryManagementWebApp.Models.Company>
+@model IEnumerable<InventoryManagementWebApp.Models.Company>
 @{
     ViewData["Title"] = "🏭 კომპანიები";
 }
@@ -11,7 +11,7 @@
         <input type="text" name="search" placeholder="ძიება (სახელი, ლოტი, ID კოდი, კონტაქტი, მისამართი)" class="form-control" value="@ViewContext.HttpContext.Request.Query["search"]" />
         <button type="submit" class="btn btn-primary">🔍 ძებნა</button>
         <a href="@Url.Action("Index", "Companies")" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
-        <a asp-action="CompanyAdd" class="btn btn-success">➕ ახალი კომპანიის დამატება</a>
+        <a asp-action="CompanyAdd" asp-policy="CanManage" class="btn btn-success">➕ ახალი კომპანიის დამატება</a>
         <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">🔙 უკან</a>
     </form>
 
@@ -55,14 +55,14 @@
                             <td class="text-center">
                                 <a asp-action="Details" asp-route-id="@company.CompanyID" class="btn btn-outline-info btn-sm" title="დეტალები">ℹ️</a>
                                 @* These action buttons remain commented as per your original code's intent *@
-                                <a asp-action="CompanyEdit" asp-route-id="@company.CompanyID" class="btn btn-outline-primary btn-sm" title="რედაქტირება">✏️</a>
+                                <a asp-action="CompanyEdit" asp-route-id="@company.CompanyID" asp-policy="CanManage" class="btn btn-outline-primary btn-sm" title="რედაქტირება">✏️</a>
                                 @if (company.IsActive.HasValue && company.IsActive.Value)
                                 {
-                                    <a asp-action="CompanyArchive" asp-route-id="@company.CompanyID" class="btn btn-outline-danger btn-sm" title="არქივირება">❌</a>
+                                    <a asp-action="CompanyArchive" asp-route-id="@company.CompanyID" asp-policy="CanManage" class="btn btn-outline-danger btn-sm" title="არქივირება">❌</a>
                                 }
                                 else
                                 {
-                                    <a asp-action="CompanyReactivate" asp-route-id="@company.CompanyID" class="btn btn-outline-success btn-sm" title="რეაქტივაცია">♻️</a>
+                                    <a asp-action="CompanyReactivate" asp-route-id="@company.CompanyID" asp-policy="CanManage" class="btn btn-outline-success btn-sm" title="რეაქტივაცია">♻️</a>
                                 }
                             </td>
                         </tr>
@@ -87,7 +87,7 @@
                             {
                                 <a href="@Url.Action("Index", "Companies")" class="btn btn-link mt-2">ძებნის გასუფთავება</a>
                             }
-                            <a asp-action="CompanyAdd" class="btn btn-link mt-2">➕ ახალი კომპანიის დამატება</a>
+                            <a asp-action="CompanyAdd" asp-policy="CanManage" class="btn btn-link mt-2">➕ ახალი კომპანიის დამატება</a>
                         </td>
                     </tr>
                 }

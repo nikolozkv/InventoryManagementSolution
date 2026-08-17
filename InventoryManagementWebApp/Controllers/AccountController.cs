@@ -39,6 +39,8 @@ public class AccountController : Controller
             return View(model);
         }
 
+        string role = user.IsAdmin ? "Admin" : (user.IsGuest ? "Guest" : "User");
+
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, user.Username),
@@ -46,7 +48,7 @@ public class AccountController : Controller
             new Claim("FullName", $"{user.FirstName} {user.LastName}".Trim()),
             new Claim("FirstName", user.FirstName),
             new Claim("LastName", user.LastName),
-            new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User"),
+            new Claim(ClaimTypes.Role, role),
             new Claim("AllowedProductsMask", user.AllowedProductsMask.ToString())
         };
 
@@ -68,11 +70,19 @@ public class AccountController : Controller
         return LocalRedirect(model.ReturnUrl ?? "/");
     }
 
+    [HttpGet]
     [HttpPost]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return RedirectToAction("Login", "Account");
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult AccessDenied()
+    {
+        return View();
     }
 
     private UserModel? GetUser(string usernameOrEmail)
@@ -81,7 +91,7 @@ public class AccountController : Controller
         conn.Open();
 
         var cmd = new SqlCommand(@"
-            SELECT TOP 1 Username, Email, PasswordHash, PasswordSalt, FirstName, LastName, IsAdmin, AllowedProductsMask
+            SELECT TOP 1 Username, Email, PasswordHash, PasswordSalt, FirstName, LastName, IsAdmin, IsGuest, AllowedProductsMask
             FROM Users
             WHERE (Username = @login OR Email = @login) AND IsActive = 1", conn);
 
@@ -99,6 +109,7 @@ public class AccountController : Controller
                 FirstName = reader["FirstName"]?.ToString() ?? string.Empty,
                 LastName = reader["LastName"]?.ToString() ?? string.Empty,
                 IsAdmin = reader["IsAdmin"] != DBNull.Value && (bool)reader["IsAdmin"],
+                IsGuest = reader["IsGuest"] != DBNull.Value && (bool)reader["IsGuest"],
                 AllowedProductsMask = reader["AllowedProductsMask"] != DBNull.Value ? Convert.ToInt32(reader["AllowedProductsMask"]) : 0
             };
         }

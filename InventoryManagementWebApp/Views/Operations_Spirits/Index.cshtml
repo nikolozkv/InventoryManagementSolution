@@ -216,7 +216,7 @@
                         @* --- გამყოფი ხაზი (ვიზუალური დაშორებისთვის) --- *@
                         <div class="vr mx-5"></div>
 
-                        <button type="submit" class="btn btn-success btn-lg" id="AddButton" form="operationForm">
+                        <button type="submit" class="btn btn-success btn-lg" id="AddButton" form="operationForm" asp-policy="CanManage">
                         <i class="bi bi-plus-circle-fill me-2"></i> დამატება
                         </button>
 
@@ -328,7 +328,7 @@
                             </td>
                             <td class="fw-bold">@op.VolumeLeft</td>
                             <td class="text-end">
-                                <form asp-action="Delete" method="post" class="delete-form d-inline">
+                                <form asp-action="Delete" method="post" class="delete-form d-inline" asp-policy="CanManage">
                                     <input type="hidden" name="operationId" value="@op.OperationID" />
                                     <button type="submit" class="btn btn-danger btn-sm" title="წაშლა"><i class="bi bi-trash-fill"></i></button>
                                 </form>
@@ -455,91 +455,104 @@
                 updateVolumeByDate();
             }
 
-            opDefSelect.addEventListener('change', async function () {
-                const selectedId = this.value;
-                if (!selectedId) {
-                    operTypeInput.value = '';
-                    compBarrelFields.style.display = 'none';
-                    distFields.style.display = 'none';
-                    limitDiv.style.display = 'none';
-                    volBeforeInput.value = '';
-                    maxAllowedInput.value = '';
-                    addButton.disabled = true;
-                    return;
-                }
+            if (opDefSelect) {
+                opDefSelect.addEventListener('change', async function () {
+                    const selectedId = this.value;
+                    if (!selectedId) {
+                        if (operTypeInput) operTypeInput.value = '';
+                        if (compBarrelFields) compBarrelFields.style.display = 'none';
+                        if (distFields) distFields.style.display = 'none';
+                        if (limitDiv) limitDiv.style.display = 'none';
+                        if (volBeforeInput) volBeforeInput.value = '';
+                        if (maxAllowedInput) maxAllowedInput.value = '';
+                        if (addButton) addButton.disabled = true;
+                        return;
+                    }
 
-                const selected = operationDefinitionsData.find(o => o.operationDefID == selectedId);
-                if (selected) {
-                    operTypeInput.value = selected.operType;
-                    await handleCompanyBarrelFields();
-                    toggleLimitFields();
-                }
-            });
+                    const selected = operationDefinitionsData.find(o => o.operationDefID == selectedId);
+                    if (selected) {
+                        if (operTypeInput) operTypeInput.value = selected.operType;
+                        await handleCompanyBarrelFields();
+                        toggleLimitFields();
+                    }
+                });
+            }
 
-            companySearchInput.addEventListener('input', () => filterDropdown(companySearchInput, oppCompSelect));
-            barrelSearchInput.addEventListener('input', () => filterDropdown(barrelSearchInput, oppBarrelSelect));
+            if (companySearchInput && oppCompSelect) companySearchInput.addEventListener('input', () => filterDropdown(companySearchInput, oppCompSelect));
+            if (barrelSearchInput && oppBarrelSelect) barrelSearchInput.addEventListener('input', () => filterDropdown(barrelSearchInput, oppBarrelSelect));
 
-            oppCompSelect.addEventListener('change', async function () {
-                const companyId = this.value;
-                oppBarrelSelect.innerHTML = '<option value="">აირჩიეთ კასრი</option>';
-                oppBarrelSelect.disabled = true;
-                barrelSearchInput.disabled = true;
-                barrelSearchInput.value = '';
+            if (oppCompSelect) {
+                oppCompSelect.addEventListener('change', async function () {
+                    const companyId = this.value;
+                    if (oppBarrelSelect) {
+                        oppBarrelSelect.innerHTML = '<option value="">აირჩიეთ კასრი</option>';
+                        oppBarrelSelect.disabled = true;
+                    }
+                    if (barrelSearchInput) {
+                        barrelSearchInput.disabled = true;
+                        barrelSearchInput.value = '';
+                    }
 
-                if (!companyId) {
+                    if (!companyId) {
+                        updateVolumeByDate();
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/operations-spirit/filtered-barrels?barrelId=${barrelId}&operType=3&companyId=${companyId}`);
+                        const barrels = await response.json();
+                        if (oppBarrelSelect) {
+                            barrels.forEach(b => {
+                                oppBarrelSelect.innerHTML += `<option value="${b.value}">${b.text}</option>`;
+                            });
+                            oppBarrelSelect.disabled = false;
+                        }
+                        if (barrelSearchInput) barrelSearchInput.disabled = false;
+                    } catch (error) {
+                        console.error("Error fetching barrels for company:", error);
+                    }
                     updateVolumeByDate();
-                    return;
-                }
+                });
+            }
 
-                try {
-                    const response = await fetch(`/api/operations-spirit/filtered-barrels?barrelId=${barrelId}&operType=3&companyId=${companyId}`);
-                    const barrels = await response.json();
-                    barrels.forEach(b => {
-                        oppBarrelSelect.innerHTML += `<option value="${b.value}">${b.text}</option>`;
-                    });
-                    oppBarrelSelect.disabled = false;
-                    barrelSearchInput.disabled = false;
-                } catch (error) {
-                    console.error("Error fetching barrels for company:", error);
-                }
-                updateVolumeByDate();
-            });
-
-            oppBarrelSelect.addEventListener('change', updateVolumeByDate);
-            transDateInput.addEventListener('change', updateVolumeByDate);
+            if (oppBarrelSelect) oppBarrelSelect.addEventListener('change', updateVolumeByDate);
+            if (transDateInput) transDateInput.addEventListener('change', updateVolumeByDate);
 
             async function updateVolumeByDate() {
+                if (!operTypeInput || !oppBarrelSelect || !transDateInput) return;
                 const operType = operTypeInput.value;
                 const oppBarrelId = oppBarrelSelect.value;
                 const date = transDateInput.value;
 
-                volBeforeInput.value = "0.00 ლ";
-                maxAllowedInput.value = "0.00 ლ";
-                addButton.disabled = true;
+                if (volBeforeInput) volBeforeInput.value = "0.00 ლ";
+                if (maxAllowedInput) maxAllowedInput.value = "0.00 ლ";
+                if (addButton) addButton.disabled = true;
 
                 if (!operType || !date) return;
 
                 if ((operType == 2 || operType == 4 || operType == 5) && !oppBarrelId) return;
-                if (operType == 3 && (!oppCompSelect.value || !oppBarrelId)) return;
+                if (operType == 3 && (!oppCompSelect || !oppCompSelect.value || !oppBarrelId)) return;
 
                 try {
                     const url = `/api/operations-spirit/get-data-by-transdate?operType=${operType}&barrelId=${barrelId}&oppositeBarrelId=${oppBarrelId || 0}&transactionDate=${date}`;
                     const response = await fetch(url);
                     const data = await response.json();
 
-                    volBeforeInput.value = (data.volume || 0).toFixed(2) + " ლ";
+                    if (volBeforeInput) volBeforeInput.value = (data.volume || 0).toFixed(2) + " ლ";
 
-                    if (data.maxAllowed === -1) {
-                        maxAllowedInput.value = "ლიმიტის გარეშე";
-                    } else {
-                        maxAllowedInput.value = (data.maxAllowed || 0).toFixed(2) + " ლ";
+                    if (maxAllowedInput) {
+                        if (data.maxAllowed === -1) {
+                            maxAllowedInput.value = "ლიმიტის გარეშე";
+                        } else {
+                            maxAllowedInput.value = (data.maxAllowed || 0).toFixed(2) + " ლ";
+                        }
                     }
 
-                    addButton.disabled = false;
+                    if (addButton) addButton.disabled = false;
                 } catch (error) {
-                    volBeforeInput.value = "0.00 ლ";
-                    maxAllowedInput.value = "0.00 ლ";
-                    addButton.disabled = true;
+                    if (volBeforeInput) volBeforeInput.value = "0.00 ლ";
+                    if (maxAllowedInput) maxAllowedInput.value = "0.00 ლ";
+                    if (addButton) addButton.disabled = true;
                 }
             }
 

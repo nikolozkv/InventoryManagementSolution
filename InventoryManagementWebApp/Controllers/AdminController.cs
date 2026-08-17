@@ -1,4 +1,4 @@
-﻿using InventoryManagementWebApp.Models;
+using InventoryManagementWebApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -9,7 +9,7 @@ using System.Text;
 
 namespace InventoryManagementWebApp.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "AdminOnly")]
     public class AdminController : Controller
     {
         private readonly IConfiguration _config;
@@ -40,7 +40,7 @@ namespace InventoryManagementWebApp.Controllers
                 _ => "WHERE UserId NOT IN (4, 10) AND IsActive = 1" // Default to active
             };
 
-            var cmd = new SqlCommand($"SELECT UserId, Username, Email, FirstName, LastName, IsActive, IsAdmin, AllowedProductsMask FROM Users {whereClause} ORDER BY Username", conn);
+            var cmd = new SqlCommand($"SELECT UserId, Username, Email, FirstName, LastName, IsActive, IsAdmin, IsGuest, AllowedProductsMask FROM Users {whereClause} ORDER BY Username", conn);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -55,12 +55,12 @@ namespace InventoryManagementWebApp.Controllers
                     LastName = reader["LastName"]?.ToString() ?? string.Empty,
                     IsActive = (bool)reader["IsActive"],
                     IsAdmin = (bool)reader["IsAdmin"],
+                    IsGuest = reader["IsGuest"] != DBNull.Value && (bool)reader["IsGuest"],
                     AllowedProductsMask = mask,
                     // ✅ 11 ნიშნავს ღვინოს (1+2+8)
                     CanAccessWine = (mask & 11) != 0,
                     // ✅ 20 ნიშნავს სპირტს (4+16)
                     CanAccessSpirit = (mask & 20) != 0,
-                    // Sparkling და WineBased აღარ გვჭირდება ცალკე, რადგან Wine-ში შედის
                 });
             }
 
@@ -124,11 +124,12 @@ namespace InventoryManagementWebApp.Controllers
                     UPDATE Users
                     SET Username = @username, Email = @email, FirstName = @firstName, 
                         LastName = @lastName, AllowedProductsMask = @mask,
-                        IsActive = @isActive, IsAdmin = @isAdmin
+                        IsActive = @isActive, IsAdmin = @isAdmin, IsGuest = @isGuest
                     WHERE UserId = @userId", conn);
 
                 cmd.Parameters.AddWithValue("@isActive", model.IsActive);
                 cmd.Parameters.AddWithValue("@isAdmin", model.IsAdmin);
+                cmd.Parameters.AddWithValue("@isGuest", model.IsGuest);
             }
 
             cmd.Parameters.AddWithValue("@mask", model.AllowedProductsMask);
@@ -334,8 +335,8 @@ namespace InventoryManagementWebApp.Controllers
             var (passwordHash, passwordSalt) = HashPassword(model.Password);
 
             // დამატებულია AllowedProductsMask ინსერტში
-            var insertCmd = new SqlCommand(@"INSERT INTO Users (Username, Email, PasswordHash, PasswordSalt, FirstName, LastName, IsActive, IsAdmin, AllowedProductsMask) 
-                                              VALUES (@username, @Email, @PasswordHash, @PasswordSalt, @FirstName, @LastName, @IsActive, @IsAdmin, @mask)", conn);
+            var insertCmd = new SqlCommand(@"INSERT INTO Users (Username, Email, PasswordHash, PasswordSalt, FirstName, LastName, IsActive, IsAdmin, IsGuest, AllowedProductsMask) 
+                                              VALUES (@username, @Email, @PasswordHash, @PasswordSalt, @FirstName, @LastName, @IsActive, @IsAdmin, @isGuest, @mask)", conn);
 
             insertCmd.Parameters.AddWithValue("@username", model.Username);
             insertCmd.Parameters.AddWithValue("@Email", model.Email);
@@ -345,6 +346,7 @@ namespace InventoryManagementWebApp.Controllers
             insertCmd.Parameters.AddWithValue("@LastName", model.LastName);
             insertCmd.Parameters.AddWithValue("@IsActive", model.IsActive);
             insertCmd.Parameters.AddWithValue("@IsAdmin", model.IsAdmin);
+            insertCmd.Parameters.AddWithValue("@isGuest", model.IsGuest);
             insertCmd.Parameters.AddWithValue("@mask", mask);
 
             try
@@ -432,7 +434,7 @@ namespace InventoryManagementWebApp.Controllers
 
             // დამატებულია AllowedProductsMask ბაზიდან ამოღებისას
             var cmd = new SqlCommand(@"
-                SELECT UserId, Username, Email, PasswordHash, PasswordSalt, FirstName, LastName, IsActive, IsAdmin, AllowedProductsMask
+                SELECT UserId, Username, Email, PasswordHash, PasswordSalt, FirstName, LastName, IsActive, IsAdmin, IsGuest, AllowedProductsMask
                 FROM Users
                 WHERE UserId = @userId", conn);
             cmd.Parameters.AddWithValue("@userId", userId);
@@ -453,11 +455,11 @@ namespace InventoryManagementWebApp.Controllers
                     LastName = reader["LastName"]?.ToString() ?? string.Empty,
                     IsActive = (bool)reader["IsActive"],
                     IsAdmin = (bool)reader["IsAdmin"],
+                    IsGuest = reader["IsGuest"] != DBNull.Value && (bool)reader["IsGuest"],
 
-                    // რიცხვის შენახვა და ოთხი CheckBox-ისთვის მნიშვნელობების (True/False) მინიჭება
                     AllowedProductsMask = mask,
-                    CanAccessWine = (mask & 11) != 0, // ნიღბის პირველი ბიტი ღვინის წვდომისთვის
-                    CanAccessSpirit = (mask & 20) != 0, // ნიღბის მესამე ბიტი სპირტისთვის (4 + 16)
+                    CanAccessWine = (mask & 11) != 0,
+                    CanAccessSpirit = (mask & 20) != 0,
                 };
             }
             return null;

@@ -148,8 +148,13 @@
         </div>
 
         <div class="form-check-inline mb-4">
-            <input asp-for="IsAdmin" class="form-check-input form-switch" type="checkbox" />
+            <input asp-for="IsAdmin" class="form-check-input form-switch" type="checkbox" id="IsAdmin" />
             <label asp-for="IsAdmin" class="form-check-label">Is Admin</label>
+        </div>
+
+        <div class="form-check-inline mb-4">
+            <input asp-for="IsGuest" class="form-check-input form-switch" type="checkbox" id="IsGuest" />
+            <label asp-for="IsGuest" class="form-check-label">Is Guest</label>
         </div>
 
         
@@ -165,4 +170,24 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const isAdminCb = document.getElementById("IsAdmin");
+            const isGuestCb = document.getElementById("IsGuest");
+
+            if (isAdminCb && isGuestCb) {
+                isAdminCb.addEventListener("change", function () {
+                    if (this.checked) {
+                        isGuestCb.checked = false;
+                    }
+                });
+
+                isGuestCb.addEventListener("change", function () {
+                    if (this.checked) {
+                        isAdminCb.checked = false;
+                    }
+                });
+            }
+        });
+    </script>
 }

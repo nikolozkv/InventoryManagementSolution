@@ -1,4 +1,4 @@
-﻿@model IEnumerable<InventoryManagementWebApp.Models.UserModel>
+@model IEnumerable<InventoryManagementWebApp.Models.UserModel>
 
 @{
     ViewData["Title"] = "Manage Users";
@@ -102,7 +102,7 @@
                 <th>Email</th>
                 <th>Name</th>
                 <th>Active</th>
-                <th>Admin</th>
+                <th>Role</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -119,9 +119,18 @@
                         </span>
                     </td>
                     <td>
-                        <span class="badge @(user.IsAdmin ? "bg-info" : "bg-secondary")">
-                            @(user.IsAdmin ? "Yes" : "No")
-                        </span>
+                        @if (user.IsAdmin)
+                        {
+                            <span class="badge bg-primary">Admin</span>
+                        }
+                        else if (user.IsGuest)
+                        {
+                            <span class="badge bg-secondary">Guest</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-info">Operator</span>
+                        }
                     </td>
                     <td>
                         <a asp-action="EditUser" asp-route-id="@user.UserId" class="btn btn-sm btn-outline-primary">Edit</a>

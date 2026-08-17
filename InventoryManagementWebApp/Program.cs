@@ -1,8 +1,8 @@
-﻿using InventoryManagementWebApp.Helpers;
+using InventoryManagementWebApp.Helpers;
 using InventoryManagementWebApp.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;//.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,9 +58,12 @@ if (builder.Environment.IsDevelopment())
     });
 }
 
-// 🔥 Global Fallback Policy
+// 🔥 Authorization Policies & Global Fallback Policy
 builder.Services.AddAuthorization(options =>
 {
+    options.AddPolicy("CanManage", policy => policy.RequireRole("Admin", "User"));
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+
     options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();

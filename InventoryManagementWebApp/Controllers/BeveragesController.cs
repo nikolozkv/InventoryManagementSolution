@@ -1,4 +1,4 @@
-﻿using InventoryManagementWebApp.Models;
+using InventoryManagementWebApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -133,6 +133,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(BeverageCreateViewModel model)
         {
@@ -235,6 +236,7 @@ namespace InventoryManagementWebApp.Controllers
         // EDIT (POST)
         // ==========================================
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, BeverageCreateViewModel model)
         {
@@ -426,6 +428,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost, ActionName("Archive")]
+        [Authorize(Policy = "CanManage")]
         public IActionResult ArchiveConfirmed(int id)
         {
             var beverage = _context.Beverages.Find(id);
@@ -454,6 +457,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost, ActionName("Reactivate")]
+        [Authorize(Policy = "CanManage")]
         public IActionResult ReactivateConfirmed(int id)
         {
             var beverage = _context.Beverages.Find(id);

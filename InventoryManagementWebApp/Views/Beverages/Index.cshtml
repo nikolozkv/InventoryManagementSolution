@@ -1,4 +1,4 @@
-﻿@model IEnumerable<InventoryManagementWebApp.Models.BeverageViewModel>
+@model IEnumerable<InventoryManagementWebApp.Models.BeverageViewModel>
 
 @{
     ViewData["Title"] = "🍷 სასმელის სახეობები";
@@ -14,7 +14,7 @@
     <button type="submit" class="btn btn-primary">🔍 ძებნა</button>
     <a href="@Url.Action("Index", "Beverages")" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
 
-    <a asp-action="Create" class="btn btn-success">➕ ახალი სასმელი</a>
+    <a asp-action="Create" asp-policy="CanManage" class="btn btn-success">➕ ახალი სასმელი</a>
 
     <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">🔙 უკან</a>
 </form>
@@ -54,14 +54,14 @@
                         }
                     </td>
                     <td class="text-center">
-                        <a asp-action="Edit" asp-route-id="@beverage.BeverageID" class="btn btn-outline-primary btn-sm" title="რედაქტირება">✏️</a>
+                        <a asp-action="Edit" asp-route-id="@beverage.BeverageID" asp-policy="CanManage" class="btn btn-outline-primary btn-sm" title="რედაქტირება">✏️</a>
                         @if (beverage.IsActive)
                         {
-                            <a asp-action="Delete" asp-route-id="@beverage.BeverageID" class="btn btn-outline-danger btn-sm" title="არქივირება">❌</a>
+                            <a asp-action="Delete" asp-route-id="@beverage.BeverageID" asp-policy="CanManage" class="btn btn-outline-danger btn-sm" title="არქივირება">❌</a>
                         }
                         else
                         {
-                            <a asp-action="Reactivate" asp-route-id="@beverage.BeverageID" class="btn btn-outline-success btn-sm" title="რეაქტივაცია">♻️</a>
+                            <a asp-action="Reactivate" asp-route-id="@beverage.BeverageID" asp-policy="CanManage" class="btn btn-outline-success btn-sm" title="რეაქტივაცია">♻️</a>
                         }
                     </td>
                 </tr>

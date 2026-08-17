@@ -1,4 +1,4 @@
-﻿using InventoryManagementWebApp.Models;
+using InventoryManagementWebApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +29,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(DocumentType docType)
         {
@@ -50,6 +51,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, DocumentType docType)
         {
@@ -75,6 +77,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         public async Task<IActionResult> Activate(int id)
         {
             var docType = await _context.DocumentTypes.FindAsync(id);
@@ -85,6 +88,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         public async Task<IActionResult> Deactivate(int id)
         {
             var docType = await _context.DocumentTypes.FindAsync(id);

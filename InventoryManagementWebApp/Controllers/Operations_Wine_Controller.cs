@@ -1,4 +1,4 @@
-﻿using InventoryManagementWebApp.Models;
+using InventoryManagementWebApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -213,6 +213,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateWineOperationViewModel model)
         {
@@ -276,6 +277,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         public async Task<IActionResult> Delete(int operationId)
         {
             // 1. ვპოულობთ კასრის ID-ს, რომ ვიცოდეთ რომელ გვერდზე დავუბრუნდეთ წაშლის შემდეგ

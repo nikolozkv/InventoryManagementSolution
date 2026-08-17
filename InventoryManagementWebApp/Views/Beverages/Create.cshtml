@@ -1,4 +1,4 @@
-﻿@model InventoryManagementWebApp.Models.BeverageCreateViewModel
+@model InventoryManagementWebApp.Models.BeverageCreateViewModel
 
 @{
     ViewData["Title"] = "➕ ახალი სასმელის დამატება";
@@ -92,7 +92,7 @@
 
                             <div class="col-12 text-center pt-3 border-top mt-2">
                                 <div class="d-flex justify-content-center flex-wrap gap-3">
-                                    <button type="submit" class="btn btn-success btn-lg me-3 px-4">
+                                    <button type="submit" asp-policy="CanManage" class="btn btn-success btn-lg me-3 px-4">
                                         <i class="bi bi-save-fill me-2"></i> 💾 დამატება
                                     </button>
                                     <a asp-action="Index" class="btn btn-secondary btn-lg px-4">

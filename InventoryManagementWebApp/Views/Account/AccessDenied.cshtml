@@ -1,0 +1,66 @@
+@{
+    ViewData["Title"] = "წვდომა შეზღუდულია (Access Denied)";
+}
+
+<style>
+    .access-denied-container {
+        max-width: 600px;
+        margin: 80px auto;
+        padding: 40px;
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .access-denied-icon {
+        font-size: 4rem;
+        color: #e74c3c;
+        margin-bottom: 20px;
+    }
+
+    .access-denied-title {
+        color: #2c3e50;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+
+    .access-denied-text {
+        color: #7f8c8d;
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    .btn-home {
+        background-color: #3498db;
+        color: #ffffff;
+        padding: 10px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    .btn-home:hover {
+        background-color: #2980b9;
+        color: #ffffff;
+    }
+</style>
+
+<div class="access-denied-container">
+    <div class="access-denied-icon">
+        🚫
+    </div>
+    <h1 class="access-denied-title">წვდომა შეზღუდულია</h1>
+    <p class="access-denied-text">
+        თქვენ არ გაქვთ ამ მოქმედების შესრულების ან ამ გვერდზე შესვლის უფლება.
+        თუ თვლით, რომ ეს შეცდომაა, მიმართეთ სისტემის ადმინისტრატორს.
+    </p>
+    <div>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-home">
+            🏠 მთავარ გვერდზე დაბრუნება
+        </a>
+    </div>
+</div>

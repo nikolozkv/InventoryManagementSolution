@@ -306,7 +306,7 @@ C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementW
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\scopedcss\bundle\InventoryManagementWebApp.styles.css
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\scopedcss\projectbundle\InventoryManagementWebApp.bundle.scp.css
-C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\compressed\o4x5olo837-{0}-xmbl8la5uv-xmbl8la5uv.gz
+C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\compressed\o4x5olo837-{0}-odvq22alxa-odvq22alxa.gz
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\compressed\x46kwsibf2-{0}-g3zghy2y1p-g3zghy2y1p.gz
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\compressed\zsqflmozpk-{0}-61n19gt1b8-61n19gt1b8.gz
 C:\Projects\InventoryManagement\InventoryManagementSolution\InventoryManagementWebApp\obj\Release\net9.0\compressed\4len3tzl1y-{0}-rkx3xv6wo2-rkx3xv6wo2.gz

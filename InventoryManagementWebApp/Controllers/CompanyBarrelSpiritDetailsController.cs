@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -124,6 +124,7 @@ namespace InventoryManagementWebApp.Controllers
         // ==========================================
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Barrel barrel)
         {
@@ -181,6 +182,7 @@ namespace InventoryManagementWebApp.Controllers
         // ==========================================
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Barrel barrel)
         {
@@ -229,6 +231,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeStatus(int id, bool newStatus)
         {
@@ -282,6 +285,7 @@ namespace InventoryManagementWebApp.Controllers
         // DELETE CONFIRMED (POST)
         // ==========================================
         [HttpPost, ActionName("Delete")]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -389,6 +393,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Activate(int id, string? search1, string? search2)
         {
@@ -406,6 +411,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Deactivate(int id, string? search1, string? search2)
         {

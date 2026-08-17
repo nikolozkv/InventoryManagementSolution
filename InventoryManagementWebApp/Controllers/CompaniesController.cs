@@ -1,4 +1,4 @@
-﻿using InventoryManagementWebApp.Models;
+using InventoryManagementWebApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -59,6 +59,7 @@ namespace InventoryManagementWebApp.Controllers
 
         // კომპანიის დამატება Stored Procedure–ის გამოძახებით
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CompanyAdd(string? CompanyLot, string Name, int CompanyTypeID, string IdentifierCode, string ContactInfo, string Address, DateTime? StartDate)
         {
@@ -126,6 +127,7 @@ namespace InventoryManagementWebApp.Controllers
 
         // კომპანიის რეაქტივაცია Stored Procedure–ის გამოძახებით
         [HttpPost, ActionName("CompanyReactivate")]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CompanyReactivateConfirmed(int id)
         {
@@ -156,6 +158,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CompanyEdit(
             int CompanyID,
@@ -206,6 +209,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost, ActionName("CompanyArchive")]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CompanyArchiveConfirmed(int id)
         {

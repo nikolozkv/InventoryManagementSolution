@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace InventoryManagementWebApp.Models
 {
@@ -33,6 +33,7 @@ namespace InventoryManagementWebApp.Models
 
         public bool IsActive { get; set; } = true;
         public bool IsAdmin { get; set; } = false;
+        public bool IsGuest { get; set; } = false;
 
 
         public int AllowedProductsMask { get; set; } // ბაზიდან წამოღებული მთავარი რიცხვი

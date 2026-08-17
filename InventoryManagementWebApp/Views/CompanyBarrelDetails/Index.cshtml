@@ -1,4 +1,4 @@
-﻿@model InventoryManagementWebApp.Models.CompanyBarrelDetailsViewModel
+@model InventoryManagementWebApp.Models.CompanyBarrelDetailsViewModel
 
 @{
     ViewData["Title"] = "🏭 კომპანიის კასრები"; // Consistent emoji in ViewData title
@@ -49,6 +49,7 @@
 
         @* 1. ახალი კასრი *@
         <a asp-controller="CompanyBarrelDetails" asp-action="Create" asp-route-companyId="@Model.CompanyID"
+           asp-policy="CanManage"
            class="btn btn-success">
             ➕ ახალი კასრი
         </a>
@@ -59,6 +60,20 @@
         @* 2. არქივი *@
         <a asp-action="Archive" asp-route-companyId="@Model.CompanyID" class="btn btn-warning text-dark">
             <i class="bi bi-archive-fill me-1"></i> არქივი
+        </a>
+
+        @* --- გამყოფი ხაზი (ვიზუალური დაშორებისთვის) --- *@
+        <div class="vr mx-2"></div>
+
+        @* 4. ექსპორტი Excel-ში - დამატებულია ფილტრაციის პარამეტრები *@
+        <a asp-controller="OperationsExport"
+           asp-action="ExportToExcel"
+           asp-route-companyId="@Model.CompanyID"
+           asp-route-typeMask="11"
+           asp-route-search1="@Context.Request.Query["search1"]"
+           asp-route-search2="@Context.Request.Query["search2"]"
+           class="btn btn-excel-local">
+            📊 Excel ექსპორტი
         </a>
 
         @* 3. უკან (ms-auto კლასით გავწიოთ სულ მარჯვნივ, თუ გსურთ) *@
@@ -132,6 +147,7 @@
                                 @if (barrel.IsDeletable)  @* თუ მხოლოდ ადმინისტრატორისთვის გვინდა მაშინ ასე: @if (User.IsInRole("Admin") && barrel.IsDeletable) *@
                                 {
                                     <a asp-action="Edit" asp-route-id="@barrel.BarrelID"
+                                       asp-policy="CanManage"
                                        class="btn btn-warning btn-sm ms-2" title="რედაქტირება">
                                         <i class="bi bi-pencil-fill"></i>
                                     </a>
@@ -186,6 +202,19 @@
     <!-- Replace 'your-font-awesome-kit-id.js' with your actual Font Awesome kit ID -->
 
 <style>
+
+      .btn-excel-local {
+        background-color: #1D6F42 !important;
+        border-color: #1D6F42 !important;
+        color: #ffffff !important;
+      }
+
+     .btn-excel-local:hover {
+        background-color: #155b33 !important;
+        border-color: #14552f !important;
+        color: #ffffff !important;
+     }
+
      .summary-card {
          background-color: #ffffff;
          border-radius: 8px;

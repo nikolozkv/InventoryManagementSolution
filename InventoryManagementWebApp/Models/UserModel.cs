@@ -1,4 +1,4 @@
-﻿namespace InventoryManagementWebApp.Models
+namespace InventoryManagementWebApp.Models
 {
     public class UserModel
     {
@@ -10,6 +10,7 @@
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public bool IsAdmin { get; set; }
+        public bool IsGuest { get; set; }
         public bool IsActive { get; set; } = true; // Assuming users are active by default
 
 

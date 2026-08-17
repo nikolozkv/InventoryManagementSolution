@@ -1,4 +1,4 @@
-﻿@model IEnumerable<InventoryManagementWebApp.Models.OperationDefinition>
+@model IEnumerable<InventoryManagementWebApp.Models.OperationDefinition>
 
 @{
     ViewData["Title"] = "🔧 ოპერაციების განსაზღვრა";
@@ -15,7 +15,7 @@
                value="@ViewContext.HttpContext.Request.Query["search"]" />
         <button type="submit" class="btn btn-primary">🔍 ძებნა</button>
         <a href="@Url.Action("Index", "OperationDefinitions")" class="btn btn-outline-secondary">🔄 გასუფთავება</a>
-        <a asp-action="Create" class="btn btn-success">➕ ახალი ოპერაციის დამატება</a>
+        <a asp-action="Create" asp-policy="CanManage" class="btn btn-success">➕ ახალი ოპერაციის დამატება</a>
         <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#infoModal">ℹ️ Info</button>
         <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">🔙 უკან</a>
         
@@ -70,17 +70,17 @@
                             <td class="text-center">
                                 @if (User.IsInRole("Admin"))
                                 {
-                                    <a asp-action="Edit" asp-route-id="@opDef.OperationDefID" class="btn btn-outline-primary btn-sm" title="რედაქტირება">✏️</a>
+                                    <a asp-action="Edit" asp-route-id="@opDef.OperationDefID" asp-policy="CanManage" class="btn btn-outline-primary btn-sm" title="რედაქტირება">✏️</a>
                                 }
                                 @if (opDef.IsActive)
                                 {
-                                    <form asp-action="Deactivate" asp-route-id="@opDef.OperationDefID" method="post" style="display:inline;">
+                                    <form asp-action="Deactivate" asp-route-id="@opDef.OperationDefID" method="post" asp-policy="CanManage" style="display:inline;">
                                         <button type="submit" class="btn btn-outline-danger btn-sm" title="დაარქივება">❌</button>
                                     </form>
                                 }
                                 else
                                 {
-                                    <form asp-action="Activate" asp-route-id="@opDef.OperationDefID" method="post" style="display:inline;">
+                                    <form asp-action="Activate" asp-route-id="@opDef.OperationDefID" method="post" asp-policy="CanManage" style="display:inline;">
                                         <button type="submit" class="btn btn-outline-success btn-sm" title="გააქტიურება">♻️</button>
                                     </form>
                                 }
@@ -107,7 +107,7 @@
                             {
                                 <a href="@Url.Action("Index", "OperationDefinitions")" class="btn btn-link mt-2">ძებნის გასუფთავება</a>
                             }
-                            <a asp-action="Create" class="btn btn-link mt-2">➕ ახალი ოპერაციის დამატება</a>
+                            <a asp-action="Create" asp-policy="CanManage" class="btn btn-link mt-2">➕ ახალი ოპერაციის დამატება</a>
                         </td>
                     </tr>
                 }

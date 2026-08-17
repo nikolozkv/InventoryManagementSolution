@@ -1,4 +1,4 @@
-﻿// File: Controllers/OperationDefinitionsController.cs
+// File: Controllers/OperationDefinitionsController.cs
 
 using InventoryManagementWebApp.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +33,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(OperationDefinition model)
         {
@@ -65,6 +66,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, OperationDefinition model)
         {
@@ -124,6 +126,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         public async Task<IActionResult> Activate(int id)
         {
             var def = await _context.OperationDefinitions.FindAsync(id);
@@ -133,6 +136,7 @@ namespace InventoryManagementWebApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanManage")]
         public async Task<IActionResult> Deactivate(int id)
         {
             var def = await _context.OperationDefinitions.FindAsync(id);

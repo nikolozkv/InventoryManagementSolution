@@ -1,4 +1,4 @@
-﻿@model InventoryManagementWebApp.Models.UserModel
+@model InventoryManagementWebApp.Models.UserModel
 
 @{
     ViewData["Title"] = "Edit User";
@@ -148,6 +148,7 @@
             @* ეს ფარული ველები (Hidden) მაინც გვჭირდება, რომ ფორმის გაგზავნისას მოდელი არ დაიკარგოს *@
             <input type="hidden" asp-for="IsActive" />
             <input type="hidden" asp-for="IsAdmin" />
+            <input type="hidden" asp-for="IsGuest" />
         }
         else
         {
@@ -156,8 +157,12 @@
                 <label class="form-check-label" asp-for="IsActive">Active</label>
             </div>
             <div class="mb-3 form-check">
-                <input class="form-check-input" asp-for="IsAdmin" />
+                <input class="form-check-input" asp-for="IsAdmin" id="IsAdmin" />
                 <label class="form-check-label" asp-for="IsAdmin">Admin</label>
+            </div>
+            <div class="mb-3 form-check">
+                <input class="form-check-input" asp-for="IsGuest" id="IsGuest" />
+                <label class="form-check-label" asp-for="IsGuest">Is Guest</label>
             </div>
         }
 
@@ -178,6 +183,26 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const isAdminCb = document.getElementById("IsAdmin");
+            const isGuestCb = document.getElementById("IsGuest");
+
+            if (isAdminCb && isGuestCb) {
+                isAdminCb.addEventListener("change", function () {
+                    if (this.checked) {
+                        isGuestCb.checked = false;
+                    }
+                });
+
+                isGuestCb.addEventListener("change", function () {
+                    if (this.checked) {
+                        isAdminCb.checked = false;
+                    }
+                });
+            }
+        });
+    </script>
     <script>
         function confirmDelete() {
         Swal.fire({

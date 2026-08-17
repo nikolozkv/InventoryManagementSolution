@@ -1,18 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations; // 👈 აი ეს ხაზი დაამატე აუცილებლად!
 
 namespace InventoryManagementWebApp.Models;
 
 public partial class Company
 {
     public int CompanyID { get; set; }
-    
-    public string? CompanyLot { get; set; } // Nullable (optional)
-    
+
+    [Required(ErrorMessage = "კომპანიის ლოტის შეყვანა აუცილებელია!")]
+    public string CompanyLot { get; set; }
+
     public string Name { get; set; } = string.Empty;
 
     public int CompanyTypeID { get; set; } // Foreign Key
 
+    [Required(ErrorMessage = "საიდენტიფიკაციო კოდის შეყვანა აუცილებელია!")]
     public string IdentifierCode { get; set; } = string.Empty;
 
     public string? ContactInfo { get; set; }
@@ -27,5 +30,4 @@ public partial class Company
 
     // Navigation Property
     public virtual CompanyType? CompanyType { get; set; } = null!;
-
 }
