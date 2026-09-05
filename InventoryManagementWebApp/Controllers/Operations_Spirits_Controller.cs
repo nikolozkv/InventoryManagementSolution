@@ -87,48 +87,56 @@ namespace InventoryManagementWebApp.Controllers
                     .ThenByDescending(o => o.OperationID)
                     .ToListAsync();
 
+            // 1. ოპერაციებიდან შემსრულებელი მომხმარებლების უნიკალური ID-ების ამოღება
             var userIds = operations.Where(o => o.ExecutedByUserID.HasValue)
                                    .Select(o => o.ExecutedByUserID.Value)
                                    .Distinct()
                                    .ToList();
 
+            // 2. ოპერაციებიდან წყარო კომპანიების უნიკალური ID-ების ამოღება
             var sourceCompanyIds = operations.Where(o => o.SourceCompanyID.HasValue)
                                              .Select(o => o.SourceCompanyID.Value)
                                              .Distinct()
                                              .ToList();
 
+            // 3. მომხმარებლების სახელების წამოღება (ახალი კავშირის გახსნის გარეშე, არსებული EF Context-ით)
             var userData = new Dictionary<int, (string, string)>();
             if (userIds.Any())
             {
-                using var conn = new SqlConnection(_context.Database.GetConnectionString());
-                conn.Open();
-                var userIdParams = string.Join(",", userIds);
-                var cmd = new SqlCommand($"SELECT UserId, FirstName, LastName FROM Users WHERE UserId IN ({userIdParams})", conn);
+                var conn = _context.Database.GetDbConnection();
+                if (conn.State != ConnectionState.Open) await conn.OpenAsync();
 
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var cmd = conn.CreateCommand();
+                var userParams = string.Join(",", userIds);
+                cmd.CommandText = $"SELECT UserID, FirstName, LastName FROM Users WHERE UserID IN ({userParams})";
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
-                    var userId = reader.GetInt32("UserId");
-                    var firstName = reader.IsDBNull("FirstName") ? "" : reader.GetString("FirstName");
-                    var lastName = reader.IsDBNull("LastName") ? "" : reader.GetString("LastName");
-                    userData[userId] = (firstName, lastName);
+                    int uId = reader.GetInt32(reader.GetOrdinal("UserID"));
+                    string fName = reader.IsDBNull(reader.GetOrdinal("FirstName")) ? "" : reader.GetString(reader.GetOrdinal("FirstName"));
+                    string lName = reader.IsDBNull(reader.GetOrdinal("LastName")) ? "" : reader.GetString(reader.GetOrdinal("LastName"));
+                    userData[uId] = (fName, lName);
                 }
             }
 
+            // 4. წყარო კომპანიების სახელების წამოღება
             var sourceCompanyData = new Dictionary<int, string>();
             if (sourceCompanyIds.Any())
             {
-                using var conn = new SqlConnection(_context.Database.GetConnectionString());
-                conn.Open();
-                var companyIdParams = string.Join(",", sourceCompanyIds);
-                var cmd = new SqlCommand($"SELECT CompanyID, Name FROM Companies WHERE CompanyID IN ({companyIdParams})", conn);
+                var conn = _context.Database.GetDbConnection();
+                if (conn.State != ConnectionState.Open) await conn.OpenAsync();
 
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using var cmd = conn.CreateCommand();
+                var compParams = string.Join(",", sourceCompanyIds);
+                cmd.CommandText = $"SELECT CompanyID, Name FROM Companies WHERE CompanyID IN ({compParams})";
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
-                    var companyId = reader.GetInt32("CompanyID");
-                    var companyName = reader.IsDBNull("Name") ? "" : reader.GetString("Name");
-                    sourceCompanyData[companyId] = companyName;
+                    int cId = reader.GetInt32(reader.GetOrdinal("CompanyID"));
+                    string cName = reader.IsDBNull(reader.GetOrdinal("Name")) ? "" : reader.GetString(reader.GetOrdinal("Name"));
+                    sourceCompanyData[cId] = cName;
                 }
             }
 

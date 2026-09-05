@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "aEBQSwBjjQ0=",
+  "dgSpecHash": "e6fBOiu2D2w=",
   "success": true,
   "projectFilePath": "C:\\Projects\\InventoryManagement\\InventoryManagementSolution\\InventoryManagementWebApp\\InventoryManagementWebApp.csproj",
   "expectedPackageFiles": [
@@ -154,7 +154,7 @@
     {
       "code": "NU1510",
       "level": "Warning",
-      "message": "PackageReference Microsoft.AspNetCore.Authorization will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
+      "message": "PackageReference Microsoft.AspNetCore.Authorization will not be pruned. This package is automatically available and does not need to be referenced explicitly. Remove the PackageReference item.",
       "projectPath": "C:\\Projects\\InventoryManagement\\InventoryManagementSolution\\InventoryManagementWebApp\\InventoryManagementWebApp.csproj",
       "warningLevel": 1,
       "filePath": "C:\\Projects\\InventoryManagement\\InventoryManagementSolution\\InventoryManagementWebApp\\InventoryManagementWebApp.csproj",

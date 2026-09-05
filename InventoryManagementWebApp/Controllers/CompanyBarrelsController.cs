@@ -36,23 +36,19 @@ namespace InventoryManagementWebApp.Controllers
 
             if (typeMask.HasValue)
             {
-                // 1. შენი ძველი ლოგიკა (მასკის გამოთვლა)
-                workingMask = userMask & typeMask.Value;
+                int calculated = userMask & typeMask.Value;
+                workingMask = calculated > 0 ? calculated : userMask;
 
-                // 2. 🆕 ნაბიჯი 3: ბაზიდან ფერის ამოღება (ამას ვამატებთ)
                 var productType = _context.BeverageProductTypes
                     .FirstOrDefault(pt => pt.BitValue == typeMask.Value);
 
                 string themeColor;
                 if (productType?.ThemeColor is not null)
                 {
-                    // Exact match exists (single product type mask).
                     themeColor = productType.ThemeColor;
                 }
                 else
                 {
-                    // Fallback for grouped masks (e.g. 11, 20):
-                    // pick the first matching product type by Position.
                     themeColor = _context.BeverageProductTypes
                         .Where(pt => (pt.BitValue & typeMask.Value) > 0 && pt.ThemeColor != null)
                         .OrderBy(pt => pt.Position)
@@ -60,7 +56,6 @@ namespace InventoryManagementWebApp.Controllers
                         .FirstOrDefault() ?? "#ece9e6";
                 }
 
-                // 3. 🆕 ფერის შენახვა Cookie-ში (ამასაც ვამატებთ)
                 HttpContext.Response.Cookies.Append(
                     "CurrentThemeColor",
                     themeColor,
@@ -69,7 +64,6 @@ namespace InventoryManagementWebApp.Controllers
 
                 ViewBag.CurrentThemeColor = themeColor;
 
-                // 4. შენი ძველი ლოგიკა (მასკის შენახვა Cookie-ში)
                 HttpContext.Response.Cookies.Append(
                     "CurrentWorkingMask",
                     workingMask.ToString(),
@@ -78,11 +72,11 @@ namespace InventoryManagementWebApp.Controllers
             }
             else
             {
-                // თუ ლინკში typeMask არ არის (მაგ: ძებნის ღილაკს დააჭირა), ვკითხულობთ დამახსოვრებულს Cookie-დან
                 if (HttpContext.Request.Cookies.TryGetValue("CurrentWorkingMask", out string? cookieMaskStr)
                     && int.TryParse(cookieMaskStr, out int cookieMask))
                 {
-                    workingMask = userMask & cookieMask; // აქაც ვამოწმებთ უსაფრთხოებას ყოველი შემთხვევისთვის
+                    int calculated = userMask & cookieMask;
+                    workingMask = calculated > 0 ? calculated : userMask;
                 }
             }
 

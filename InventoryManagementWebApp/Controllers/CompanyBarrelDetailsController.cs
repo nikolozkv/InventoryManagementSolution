@@ -28,21 +28,24 @@ namespace InventoryManagementWebApp.Controllers
         // ==========================================
         private int GetWorkingMask()
         {
-            // 1. იუზერის მაქსიმალური დაშვებები
+            // 1. ამოვიღოთ მომხმარებლის მაქსიმალური უფლებების ნიღაბი ლოგინიდან
             int userMask = 0;
             var maskClaim = User.FindFirst("AllowedProductsMask")?.Value;
             if (!string.IsNullOrEmpty(maskClaim)) int.TryParse(maskClaim, out userMask);
 
-            // 2. ქუქიში დამახსოვრებული მიმდინარე სამუშაო პაკეტი (თუ არსებობს)
-            int cookieMask = userMask;
+            // 2. ვამოწმებთ ბრაუზერის ქუქიში დამახსოვრებულ სამუშაო ნიღაბს
             if (HttpContext.Request.Cookies.TryGetValue("CurrentWorkingMask", out string? cookieStr)
                 && int.TryParse(cookieStr, out int parsedCookie))
             {
-                cookieMask = parsedCookie;
+                int effective = userMask & parsedCookie;
+
+                // თუ ქუქის და იუზერის ნიღბის თანაკვეთა 0-ზე მეტია, ვიყენებთ მას
+                if (effective > 0)
+                    return effective;
             }
 
-            // ვაბრუნებთ უსაფრთხოდ გადამოწმებულ ნიღაბს
-            return userMask & cookieMask;
+            // თუ ქუქი არასწორია ან 0 ჯდება (კონფლიქტია), ვაბრუნებთ იუზერის სრულ ნიღაბს, რომ სია არ გაქრეს
+            return userMask;
         }
         private int GetCurrentUserId()
         {
