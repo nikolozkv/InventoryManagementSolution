@@ -1,9 +1,9 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Projects\\InventoryManagement\\InventoryManagementSolution\\",
+  "WorkspaceRootPath": "D:\\Sandro\u0027s files\\Desktop\\Websites\\InventoryManagementSolution\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{177CE28A-1408-45A6-88F9-CDF3F8567E39}|InventoryManagementWebApp\\InventoryManagementWebApp.csproj|c:\\projects\\inventorymanagement\\inventorymanagementsolution\\inventorymanagementwebapp\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{177CE28A-1408-45A6-88F9-CDF3F8567E39}|InventoryManagementWebApp\\InventoryManagementWebApp.csproj|d:\\sandro\u0027s files\\desktop\\websites\\inventorymanagementsolution\\inventorymanagementwebapp\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{177CE28A-1408-45A6-88F9-CDF3F8567E39}|InventoryManagementWebApp\\InventoryManagementWebApp.csproj|solutionrelative:inventorymanagementwebapp\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -14,29 +14,21 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
-              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "AccountController.cs",
-              "DocumentMoniker": "C:\\Projects\\InventoryManagement\\InventoryManagementSolution\\InventoryManagementWebApp\\Controllers\\AccountController.cs",
+              "DocumentMoniker": "D:\\Sandro\u0027s files\\Desktop\\Websites\\InventoryManagementSolution\\InventoryManagementWebApp\\Controllers\\AccountController.cs",
               "RelativeDocumentMoniker": "InventoryManagementWebApp\\Controllers\\AccountController.cs",
-              "ToolTip": "C:\\Projects\\InventoryManagement\\InventoryManagementSolution\\InventoryManagementWebApp\\Controllers\\AccountController.cs",
+              "ToolTip": "D:\\Sandro\u0027s files\\Desktop\\Websites\\InventoryManagementSolution\\InventoryManagementWebApp\\Controllers\\AccountController.cs",
               "RelativeToolTip": "InventoryManagementWebApp\\Controllers\\AccountController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-03-23T07:18:45.069Z",
               "EditorCaption": ""
